@@ -30,6 +30,7 @@ python3 -m http.server
 - Dark/light theme via `prefers-color-scheme` using CSS custom properties.
 - All user-facing strings are in the HTML/JS, not externalized.
 - Score colors: green (4.5+) → yellow-green → amber → orange → red (< 1.5), grey for unrated.
+- Spots with `classified: true` (BC classified waters) render purple + dashed (`CLASSIFIED_COLOR`) instead of the score color, with a purple ring on pins and a "classified water" chip/badge in cards and popups. A map legend (bottom-left) explains both schemes.
 - Escape all user content with `escapeHtml()` before inserting into the DOM.
 
 ## Testing

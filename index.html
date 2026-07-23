@@ -293,6 +293,47 @@
     border: 2px solid #fff;
     box-shadow: 0 1px 5px rgba(0,0,0,0.4);
   }
+  .pin-icon.classified { border-color: #8b5cf6; box-shadow: 0 1px 5px rgba(0,0,0,0.4), 0 0 0 2px #8b5cf6; }
+  .chip.classified { color: #8b5cf6; font-weight: 600; }
+  .cw-badge {
+    display: inline-block;
+    margin: 3px 0 2px;
+    padding: 2px 7px;
+    border-radius: 999px;
+    background: #8b5cf6;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+  }
+  .checkbox-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    font-size: 12px;
+    cursor: pointer;
+  }
+  .checkbox-row input { margin-top: 2px; accent-color: #8b5cf6; }
+  .map-legend {
+    background: var(--panel);
+    color: var(--text);
+    padding: 8px 10px;
+    border-radius: 10px;
+    box-shadow: var(--shadow);
+    font-size: 11px;
+    line-height: 1.7;
+  }
+  .map-legend .sw {
+    display: inline-block;
+    width: 18px;
+    height: 5px;
+    border-radius: 3px;
+    margin-right: 6px;
+    vertical-align: middle;
+  }
+  .map-legend .sw.dashed {
+    background: repeating-linear-gradient(90deg, #8b5cf6 0 5px, transparent 5px 8px);
+  }
   .pin-icon span {
     transform: rotate(45deg);
     color: #fff;
@@ -388,6 +429,10 @@
         <option value="calgary">Calgary area</option>
         <option value="other">Other</option>
       </select>
+    </div>
+    <div class="field">
+      <label class="checkbox-row"><input type="checkbox" id="f-classified">
+        <span>Classified water — BC special-licence stream (drawn purple &amp; dashed on the map)</span></label>
     </div>
     <div class="field">
       <label for="f-species">Species (comma-separated)</label>
@@ -606,6 +651,7 @@ const SEED_SPOTS = [
     detail: 'Below St. Mary Lake through Marysville down to the Kootenay confluence near Fort Steele',
     waterbody: 'St. Mary River',
     region: 'south',
+    classified: true,
     geometry: { type: 'line', coords: [[49.594, -116.245], [49.617, -116.100], [49.628, -115.955], [49.615, -115.850], [49.596, -115.760], [49.602, -115.660]] },
     species: ['westslope cutthroat trout', 'cutbow', 'bull trout', 'rainbow trout', 'mountain whitefish'],
     season: 'CLOSED Apr 1 – Jun 15, and usually blown out with runoff until ~Jul 1. Prime dry fly: mid-July–August (stoneflies, caddis, attractors); Sept–Oct terrestrials and Blue Winged Olives.',
@@ -620,6 +666,7 @@ const SEED_SPOTS = [
     detail: 'Day-use area on the east end of St. Mary Lake — walk downriver from the parking lot into pocket water',
     waterbody: 'St. Mary River',
     region: 'south',
+    classified: true,
     geometry: { type: 'marker', coords: [[49.601, -116.160]] },
     species: ['westslope cutthroat trout', 'rainbow trout', 'mountain whitefish'],
     season: 'Jul–Sept once clear; upper river is small and intimate, cutts visible over golden sand',
@@ -634,6 +681,7 @@ const SEED_SPOTS = [
     detail: 'Hwy 95A crossing between Kimberley and Cranbrook — wade up or down from the bridge',
     waterbody: 'St. Mary River',
     region: 'south',
+    classified: true,
     geometry: { type: 'marker', coords: [[49.5823, -115.7980]] },
     species: ['westslope cutthroat trout', 'bull trout', 'mountain whitefish'],
     season: 'Jul–Sept prime; mid-river, fishes a bit bigger/slower than the upper river near the park',
@@ -648,6 +696,7 @@ const SEED_SPOTS = [
     detail: 'Sparwood down through Fernie to Elko — the classic floats are around Fernie',
     waterbody: 'Elk River',
     region: 'south',
+    classified: true,
     geometry: { type: 'line', coords: [[49.733, -114.886], [49.620, -114.990], [49.504, -115.062], [49.420, -115.075], [49.303, -115.100]] },
     species: ['westslope cutthroat trout', 'bull trout', 'mountain whitefish'],
     season: 'Open Jun 15 – late Oct (closed Apr 1 – Jun 14). July–Sept dry-fly heaven; October streamers for bulls',
@@ -662,6 +711,7 @@ const SEED_SPOTS = [
     detail: 'Remote tributary south of Elko — fly-fishing-only trophy cutthroat water',
     waterbody: 'Wigwam River',
     region: 'south',
+    classified: true,
     geometry: { type: 'line', coords: [[49.285, -115.065], [49.220, -115.030], [49.150, -115.000], [49.080, -114.970]] },
     species: ['westslope cutthroat trout (trophy)', 'bull trout'],
     season: 'Jun 15 – fall; low clear water mid-summer',
@@ -676,6 +726,7 @@ const SEED_SPOTS = [
     detail: 'East of Canal Flats beyond Whiteswan — native cutthroat water below the Outlet Creek/Lussier confluences',
     waterbody: 'White River',
     region: 'fairmont',
+    classified: true,
     geometry: { type: 'line', coords: [[50.095, -115.620], [50.115, -115.500], [50.130, -115.400], [50.150, -115.300]] },
     species: ['westslope cutthroat trout (native)', 'bull trout', 'mountain whitefish'],
     season: 'July–Oct after runoff; classic attractor dry-fly water',
@@ -704,6 +755,7 @@ const SEED_SPOTS = [
     detail: 'Freestone Kootenay tributary west of Skookumchuck — remote canyon pools, wild cutthroat to 19"',
     waterbody: 'Skookumchuck Creek',
     region: 'fairmont',
+    classified: true,
     geometry: { type: 'line', coords: [[49.9120, -115.7600], [49.9250, -115.8200], [49.9350, -115.8800], [49.9450, -115.9500]] },
     species: ['westslope cutthroat trout (wild)', 'bull trout'],
     season: 'CLOSED Apr 1 – Jun 15; runs high/murky at the opener — locals wait until ~Jul 1–15. Prime dry-fly July–Sept.',
@@ -732,6 +784,7 @@ const SEED_SPOTS = [
     detail: 'Big water south of Canal Flats past Wasa and Fort Steele — fish seams, riffle edges, and tributary mouths',
     waterbody: 'Kootenay River',
     region: 'south',
+    classified: true,
     geometry: { type: 'line', coords: [[50.120, -115.790], [49.920, -115.735], [49.780, -115.720], [49.615, -115.625], [49.420, -115.430]] },
     species: ['westslope cutthroat trout', 'bull trout', 'mountain whitefish'],
     season: 'Late July–Oct once it clears; big attractor dries and streamers',
@@ -926,6 +979,10 @@ function scoreColor(score) {
   return '#b91c1c';
 }
 
+// Classified waters (BC special-licence streams) get their own look so they
+// stand out from the rating colours: purple + dashed.
+const CLASSIFIED_COLOR = '#8b5cf6';
+
 function fmtScore(score) {
   return score == null ? '—' : (Math.round(score * 10) / 10).toFixed(1);
 }
@@ -952,6 +1009,22 @@ baseOSM.addTo(map);
 L.control.layers({ 'Street': baseOSM, 'Topo': baseTopo, 'Satellite': baseSat }, null, { position: 'topright' }).addTo(map);
 L.control.scale({ imperial: false }).addTo(map);
 
+const legendControl = L.control({ position: 'bottomleft' });
+legendControl.onAdd = () => {
+  const div = L.DomUtil.create('div', 'map-legend');
+  div.innerHTML =
+    `<b>Colour = your overall rating</b><br>` +
+    `<span class="sw" style="background:#15803d"></span>4.5–5` +
+    ` <span class="sw" style="background:#65a30d"></span>3.5+` +
+    ` <span class="sw" style="background:#d97706"></span>2.5+` +
+    ` <span class="sw" style="background:#ea580c"></span>1.5+` +
+    ` <span class="sw" style="background:#b91c1c"></span>&lt;1.5` +
+    ` <span class="sw" style="background:#7c8a99"></span>unrated<br>` +
+    `<span class="sw dashed"></span>Classified water (special licence)`;
+  return div;
+};
+legendControl.addTo(map);
+
 const spotLayerGroup = L.layerGroup().addTo(map);
 const layersBySpot = new Map();
 
@@ -959,7 +1032,7 @@ function pinIcon(spot) {
   const score = overallScore(spot);
   return L.divIcon({
     className: '',
-    html: `<div class="pin-icon" style="background:${scoreColor(score)}"><span>${fmtScore(score)}</span></div>`,
+    html: `<div class="pin-icon${spot.classified ? ' classified' : ''}" style="background:${scoreColor(score)}"><span>${fmtScore(score)}</span></div>`,
     iconSize: [30, 30],
     iconAnchor: [4, 28],
     popupAnchor: [10, -26],
@@ -974,9 +1047,13 @@ function buildLayer(spot) {
   if (g.type === 'marker') {
     layer = L.marker(g.coords[0], { icon: pinIcon(spot) });
   } else if (g.type === 'line') {
-    layer = L.polyline(g.coords, { color, weight: 5, opacity: 0.9 });
+    layer = spot.classified
+      ? L.polyline(g.coords, { color: CLASSIFIED_COLOR, weight: 5, opacity: 0.9, dashArray: '9 7' })
+      : L.polyline(g.coords, { color, weight: 5, opacity: 0.9 });
   } else {
-    layer = L.polygon(g.coords, { color, weight: 3, fillOpacity: 0.25 });
+    layer = spot.classified
+      ? L.polygon(g.coords, { color: CLASSIFIED_COLOR, weight: 3, fillOpacity: 0.25, dashArray: '9 7' })
+      : L.polygon(g.coords, { color, weight: 3, fillOpacity: 0.25 });
   }
   layer.bindPopup(() => popupHtml(spot), {
     maxWidth: 280,
@@ -992,6 +1069,7 @@ function popupHtml(spot) {
   const esc = escapeHtml;
   let html = `<div class="popup-name">${esc(spot.name)} ` +
     `<span class="score-badge" style="background:${scoreColor(score)}">${fmtScore(score)}</span></div>`;
+  if (spot.classified) html += `<div class="cw-badge">CLASSIFIED WATER — extra licence for non-BC residents</div>`;
   if (spot.detail) html += `<div class="popup-detail">📍 ${esc(spot.detail)}</div>`;
   if (spot.waterbody) html += `<div class="popup-section"><b>Water</b><br>${esc(spot.waterbody)}</div>`;
   if (spot.species && spot.species.length) html += `<div class="popup-section"><b>Species</b><br>${esc(spot.species.join(', '))}</div>`;
@@ -1042,7 +1120,7 @@ function filteredSpots() {
   return spots.filter(s => {
     if (region && s.region !== region) return false;
     if (!q) return true;
-    const hay = [s.name, s.detail, s.waterbody, s.season, s.access, s.notes, (s.species || []).join(' ')]
+    const hay = [s.name, s.detail, s.waterbody, s.season, s.access, s.notes, (s.species || []).join(' '), s.classified ? 'classified water' : '']
       .join(' ').toLowerCase();
     return hay.includes(q);
   });
@@ -1080,6 +1158,7 @@ function renderList() {
       `<div class="score-badge" style="background:${scoreColor(score)}">${fmtScore(score)}</div></div>` +
       (spot.detail ? `<div class="detail">${geomIcon} ${escapeHtml(spot.detail)}</div>` : '') +
       `<div class="chips"><span class="chip region">${escapeHtml(REGION_LABELS[spot.region] || spot.region)}</span>` +
+      (spot.classified ? `<span class="chip classified">classified water</span>` : '') +
       (spot.species || []).map(sp => `<span class="chip">${escapeHtml(sp)}</span>`).join('') +
       `</div>`;
     card.addEventListener('click', () => { setActiveCard(spot.id); flyToSpot(spot); });
@@ -1237,6 +1316,7 @@ function openEditor(spotId, newGeometry = null) {
   document.getElementById('f-detail').value = spot ? spot.detail : '';
   document.getElementById('f-water').value = spot ? spot.waterbody : '';
   document.getElementById('f-region').value = spot ? spot.region : guessRegion(editing.geometry);
+  document.getElementById('f-classified').checked = spot ? !!spot.classified : false;
   document.getElementById('f-species').value = spot ? (spot.species || []).join(', ') : '';
   document.getElementById('f-season').value = spot ? spot.season : '';
   document.getElementById('f-access').value = spot ? spot.access : '';
@@ -1287,6 +1367,7 @@ document.getElementById('btn-save').addEventListener('click', () => {
     detail: document.getElementById('f-detail').value.trim(),
     waterbody: document.getElementById('f-water').value.trim(),
     region: document.getElementById('f-region').value,
+    classified: document.getElementById('f-classified').checked,
     species: document.getElementById('f-species').value.split(',').map(s => s.trim()).filter(Boolean),
     season: document.getElementById('f-season').value.trim(),
     access: document.getElementById('f-access').value.trim(),
