@@ -1,0 +1,1061 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Debt Wall — refinancing &amp; monetization model</title>
+<style>
+  /* ---------- tokens ---------- */
+  :root {
+    color-scheme: light;
+    --page:          #f9f9f7;
+    --surface-1:     #fcfcfb;
+    --text-primary:  #0b0b0b;
+    --text-secondary:#52514e;
+    --text-muted:    #898781;
+    --grid:          #e1e0d9;
+    --baseline:      #c3c2b7;
+    --border:        rgba(11,11,11,0.10);
+    --series-1:      #2a78d6;  /* blue   */
+    --series-2:      #eb6834;  /* orange */
+    --series-3:      #1baf7a;  /* aqua   */
+    --accent:        #2a78d6;
+    --accent-ink:    #1c5cab;
+    --wash-1:        rgba(42,120,214,0.10);
+    --critical:      #d03b3b;
+    --sans: system-ui, -apple-system, "Segoe UI", sans-serif;
+    --serif: Georgia, "Times New Roman", serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) {
+      color-scheme: dark;
+      --page:          #0d0d0d;
+      --surface-1:     #1a1a19;
+      --text-primary:  #ffffff;
+      --text-secondary:#c3c2b7;
+      --text-muted:    #898781;
+      --grid:          #2c2c2a;
+      --baseline:      #383835;
+      --border:        rgba(255,255,255,0.10);
+      --series-1:      #3987e5;
+      --series-2:      #d95926;
+      --series-3:      #199e70;
+      --accent:        #3987e5;
+      --accent-ink:    #86b6ef;
+      --wash-1:        rgba(57,135,229,0.14);
+      --critical:      #e66767;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --page:          #0d0d0d;
+    --surface-1:     #1a1a19;
+    --text-primary:  #ffffff;
+    --text-secondary:#c3c2b7;
+    --text-muted:    #898781;
+    --grid:          #2c2c2a;
+    --baseline:      #383835;
+    --border:        rgba(255,255,255,0.10);
+    --series-1:      #3987e5;
+    --series-2:      #d95926;
+    --series-3:      #199e70;
+    --accent:        #3987e5;
+    --accent-ink:    #86b6ef;
+    --wash-1:        rgba(57,135,229,0.14);
+    --critical:      #e66767;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--page);
+    color: var(--text-primary);
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  main { max-width: 1080px; margin: 0 auto; padding: 40px 20px 80px; }
+
+  /* ---------- type ---------- */
+  h1 { font-size: 34px; line-height: 1.15; margin: 6px 0 10px; letter-spacing: -0.01em; text-wrap: balance; }
+  h2 { font-size: 21px; margin: 0 0 6px; letter-spacing: -0.005em; text-wrap: balance; }
+  h3 { font-size: 16px; margin: 0 0 4px; }
+  .eyebrow {
+    font-size: 11.5px; font-weight: 600; letter-spacing: 0.09em;
+    text-transform: uppercase; color: var(--text-muted); margin: 0;
+  }
+  .lede { font-family: var(--serif); font-size: 17px; color: var(--text-secondary); max-width: 66ch; margin: 0; }
+  .prose { font-family: var(--serif); font-size: 16.5px; line-height: 1.65; color: var(--text-primary); max-width: 68ch; }
+  .prose p { margin: 0 0 14px; }
+  .prose strong { font-family: var(--sans); font-size: 15px; }
+  .note { font-size: 13px; color: var(--text-muted); max-width: 78ch; }
+  a { color: var(--accent-ink); text-decoration: none; }
+  a:hover, a:focus-visible { text-decoration: underline; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  section { margin-top: 52px; }
+  header.masthead { padding-bottom: 8px; }
+
+  /* ---------- cards ---------- */
+  .card {
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+  }
+  .card + .card { margin-top: 16px; }
+  .card-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 4px; }
+  .card-sub { font-size: 13px; color: var(--text-secondary); margin: 0 0 10px; max-width: 80ch; }
+
+  /* ---------- assumptions ---------- */
+  .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 760px) { .controls { grid-template-columns: 1fr; } }
+  fieldset {
+    border: 1px solid var(--border); border-radius: 10px;
+    background: var(--surface-1); padding: 14px 16px 16px; margin: 0; min-width: 0;
+  }
+  legend { font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted); padding: 0 6px; }
+  .fields { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px 14px; }
+  .field label { display: block; font-size: 12px; color: var(--text-secondary); margin-bottom: 3px; }
+  .field input[type="number"] {
+    width: 100%; padding: 6px 8px; font: inherit; font-variant-numeric: tabular-nums;
+    color: var(--text-primary); background: var(--page);
+    border: 1px solid var(--baseline); border-radius: 6px;
+  }
+  .field input[type="number"]:focus { outline: 2px solid var(--accent); outline-offset: 0; border-color: transparent; }
+  .toggle { display: flex; gap: 8px; align-items: flex-start; margin-top: 12px; font-size: 13px; color: var(--text-secondary); }
+  .toggle input { margin-top: 3px; accent-color: var(--accent); }
+  .controls-foot { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 10px; flex-wrap: wrap; }
+  button.reset {
+    font: inherit; font-size: 13px; padding: 6px 14px; cursor: pointer;
+    color: var(--text-secondary); background: var(--surface-1);
+    border: 1px solid var(--baseline); border-radius: 6px;
+  }
+  button.reset:hover { color: var(--text-primary); }
+
+  /* ---------- KPI tiles ---------- */
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+  .tile {
+    background: var(--surface-1); border: 1px solid var(--border); border-radius: 10px;
+    padding: 14px 16px; min-width: 0;
+  }
+  .tile .t-label { font-size: 12px; color: var(--text-secondary); margin: 0 0 4px; }
+  .tile .t-value { font-size: 27px; font-weight: 600; line-height: 1.1; margin: 0; }
+  .tile .t-sub { font-size: 12px; color: var(--text-muted); margin: 4px 0 0; }
+  .tile .t-delta { font-size: 12.5px; font-weight: 600; }
+  .tile .t-delta.bad { color: var(--critical); }
+
+  /* ---------- charts ---------- */
+  .chart-wrap { overflow-x: auto; }
+  .chart-wrap svg { display: block; }
+  svg text { font-family: var(--sans); }
+  .legend { display: flex; gap: 18px; flex-wrap: wrap; font-size: 12.5px; color: var(--text-secondary); margin: 2px 0 8px; }
+  .legend .key { display: inline-flex; align-items: center; gap: 6px; }
+  .legend .swatch { width: 12px; height: 12px; border-radius: 3px; }
+  .legend .linekey { width: 16px; height: 2px; border-radius: 1px; }
+
+  /* tooltip */
+  #tip {
+    position: fixed; z-index: 30; pointer-events: none; display: none;
+    background: var(--surface-1); border: 1px solid var(--border); border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.14); padding: 8px 10px; min-width: 180px; max-width: 280px;
+  }
+  #tip .tt-title { font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 5px; }
+  #tip .tt-row { display: flex; align-items: center; gap: 7px; font-size: 12.5px; padding: 1.5px 0; }
+  #tip .tt-key { width: 14px; height: 2.5px; border-radius: 1px; flex: none; }
+  #tip .tt-name { color: var(--text-secondary); flex: 1 1 auto; }
+  #tip .tt-val { font-weight: 600; color: var(--text-primary); font-variant-numeric: tabular-nums; }
+  #tip .tt-foot { font-size: 11.5px; color: var(--text-muted); margin-top: 4px; }
+
+  /* ---------- tables ---------- */
+  .table-wrap { overflow-x: auto; }
+  table.data { border-collapse: collapse; width: 100%; font-size: 13px; }
+  table.data th, table.data td { padding: 6px 10px; text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  table.data th { color: var(--text-secondary); font-weight: 600; border-bottom: 1px solid var(--baseline); }
+  table.data td { border-bottom: 1px solid var(--grid); color: var(--text-primary); }
+  table.data th:first-child, table.data td:first-child { text-align: left; }
+  table.data tr:last-child td { border-bottom: none; }
+
+  /* tracker table (mixed text) */
+  table.tracker { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+  table.tracker th, table.tracker td { padding: 9px 12px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--grid); }
+  table.tracker th { color: var(--text-secondary); font-weight: 600; border-bottom: 1px solid var(--baseline); white-space: nowrap; }
+  table.tracker td:first-child { font-weight: 600; white-space: nowrap; }
+  table.tracker tr:last-child td { border-bottom: none; }
+
+  /* ---------- playbook ---------- */
+  .stages { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; counter-reset: stage; }
+  .stage { background: var(--surface-1); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
+  .stage::before {
+    counter-increment: stage; content: "Stage " counter(stage);
+    display: block; font-size: 11px; font-weight: 600; letter-spacing: 0.09em;
+    text-transform: uppercase; color: var(--text-muted); margin-bottom: 6px;
+  }
+  .stage p { font-size: 13.5px; color: var(--text-secondary); margin: 6px 0 0; }
+  .stage .watch { font-size: 12.5px; margin-top: 10px; color: var(--text-secondary); }
+  .stage .watch b { color: var(--text-primary); font-weight: 600; }
+
+  .callout {
+    border-left: 3px solid var(--accent); background: var(--wash-1);
+    border-radius: 0 8px 8px 0; padding: 12px 16px; margin: 18px 0; max-width: 74ch;
+    font-family: var(--serif); font-size: 15.5px;
+  }
+
+  footer { margin-top: 64px; padding-top: 20px; border-top: 1px solid var(--grid); }
+  footer ul { margin: 8px 0 0; padding-left: 18px; font-size: 13px; color: var(--text-secondary); }
+  footer li { margin-bottom: 4px; }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .bar-seg, .col-band { transition: opacity 120ms ease; }
+  }
+</style>
+</head>
+<body>
+<main>
+
+  <!-- ============ masthead ============ -->
+  <header class="masthead">
+    <p class="eyebrow">Sovereign refinancing model · baselines as of July 2026</p>
+    <h1>The Debt Wall</h1>
+    <p class="lede">How much money has to be created, and when, for the world's debts to keep rolling
+    over — a working model of the refinancing wall, the interest-rate roll-up, and the liquidity
+    growth it forces.</p>
+  </header>
+
+  <!-- ============ thesis ============ -->
+  <section aria-labelledby="thesis-h">
+    <p class="eyebrow" id="thesis-h">The mechanism</p>
+    <h2>Markets are refinancing systems, not funding systems</h2>
+    <div class="prose">
+      <p>Modern capital markets no longer exist primarily to raise new money. On Michael Howell's
+      estimate, roughly <em>three of every four dollars</em> transacted in financial markets are
+      rolling over debts that already exist. With a global debt stock near $350&nbsp;trillion and an
+      average maturity around seven years, about $50&nbsp;trillion has to be refinanced every year
+      before a single dollar of new borrowing happens. The model below reproduces his 70–80%
+      figure from those two inputs alone.</p>
+      <p>The system cannot let the stock default, because the old debt <em>is</em> the collateral
+      under the new money: government bonds back repo, bank balance sheets, money-market funds, and
+      derivative margin. A failed rollover is not one creditor's loss — it is a hole in the
+      collateral pool that every other rollover leans on. So when private balance-sheet capacity
+      can't absorb the wall at prevailing yields, yields rise until something breaks, and then the
+      state's own balance sheet — the central bank — absorbs it anyway. Every stress event of the
+      past decade (repo 2019, COVID 2020, gilts 2022, SVB 2023) ended the same way, within days.</p>
+      <p>That is the accounting identity this page walks through:</p>
+    </div>
+    <div class="callout">
+      <strong>Gross financing need = maturing debt + new deficit.</strong><br>
+      Buyers = private savings + bank money creation + central-bank money creation.<br>
+      Whatever private demand won't take at tolerable yields, the monetary system must — so the
+      question is never <em>whether</em> the residual gets monetized, only its size and timing.
+    </div>
+  </section>
+
+  <!-- ============ assumptions ============ -->
+  <section aria-labelledby="assump-h">
+    <p class="eyebrow" id="assump-h">Assumptions</p>
+    <h2>Every number below is editable</h2>
+    <p class="card-sub">Defaults are July-2026 published figures (sources in the footer). All charts,
+    tiles, and tables recompute as you type.</p>
+    <form id="controls" class="controls">
+      <fieldset>
+        <legend>United States (fiscal years)</legend>
+        <div class="fields">
+          <div class="field"><label for="i-debt">Debt held by public, $T</label>
+            <input id="i-debt" type="number" step="0.1" min="1" value="30.3"></div>
+          <div class="field"><label for="i-coupon">Avg coupon today, %</label>
+            <input id="i-coupon" type="number" step="0.01" min="0" max="20" value="3.39"></div>
+          <div class="field"><label for="i-rate">New-issue rate, %</label>
+            <input id="i-rate" type="number" step="0.05" min="0" max="20" value="4.25"></div>
+          <div class="field"><label for="i-roll">Maturing within 1yr, %</label>
+            <input id="i-roll" type="number" step="1" min="5" max="60" value="33"></div>
+          <div class="field"><label for="i-primary">Primary deficit, % GDP</label>
+            <input id="i-primary" type="number" step="0.1" min="-5" max="15" value="2.9"></div>
+          <div class="field"><label for="i-gdp">Nominal GDP, $T</label>
+            <input id="i-gdp" type="number" step="0.1" min="1" value="30.5"></div>
+          <div class="field"><label for="i-gdpg">Nominal GDP growth, %</label>
+            <input id="i-gdpg" type="number" step="0.1" min="-2" max="12" value="4.0"></div>
+          <div class="field"><label for="i-horizon">Horizon, years (5–15)</label>
+            <input id="i-horizon" type="number" step="1" min="5" max="15" value="10"></div>
+        </div>
+        <label class="toggle"><input id="i-ss" type="checkbox">
+          <span>Borrow to pay full Social Security benefits after OASI trust-fund depletion
+          (Q4 2032): adds ≈$0.45T/yr of extra issuance from FY2033, growing 5%/yr. Off = current
+          law, i.e. an automatic 22% benefit cut instead.</span></label>
+      </fieldset>
+      <fieldset>
+        <legend>Global (Howell framework)</legend>
+        <div class="fields">
+          <div class="field"><label for="g-debt">World debt stock, $T</label>
+            <input id="g-debt" type="number" step="5" min="50" value="350"></div>
+          <div class="field"><label for="g-liq">Global liquidity, $T</label>
+            <input id="g-liq" type="number" step="1" min="20" value="189"></div>
+          <div class="field"><label for="g-mat">Avg debt maturity, yrs</label>
+            <input id="g-mat" type="number" step="0.5" min="1" max="30" value="7"></div>
+          <div class="field"><label for="g-dg">Debt growth, %/yr</label>
+            <input id="g-dg" type="number" step="0.1" min="0" max="15" value="5.0"></div>
+          <div class="field"><label for="g-lg">Required liquidity growth, %/yr</label>
+            <input id="g-lg" type="number" step="0.1" min="0" max="15" value="8.0"></div>
+        </div>
+        <p class="note" style="margin-top:12px">Howell's rule of thumb: liquidity must compound
+        near <b>8%/yr</b> — debt growth plus the extra balance-sheet capacity soaked up by rising
+        collateral haircuts and margin. Set it equal to debt growth for the pure
+        keep-the-ratio-constant case.</p>
+      </fieldset>
+    </form>
+    <div class="controls-foot">
+      <p class="note">The US model is stylized: bills are counted once per year at face value,
+      the average coupon re-weights as maturing debt rolls into the new-issue rate, and the deficit
+      is primary balance + interest (so the interest spiral is endogenous).</p>
+      <button type="button" class="reset" id="reset-btn">Reset to July-2026 baselines</button>
+    </div>
+  </section>
+
+  <!-- ============ KPIs ============ -->
+  <section aria-labelledby="kpi-h">
+    <p class="eyebrow" id="kpi-h">Headline outputs</p>
+    <h2>What the arithmetic says</h2>
+    <div class="kpis" id="kpi-row"></div>
+  </section>
+
+  <!-- ============ US charts ============ -->
+  <section aria-labelledby="us-h">
+    <p class="eyebrow" id="us-h">United States</p>
+    <h2>The Treasury's rollover treadmill</h2>
+
+    <div class="card">
+      <div class="card-head"><h3>Gross financing need by fiscal year</h3>
+        <span class="note">$ trillions</span></div>
+      <p class="card-sub">Each column is what the Treasury must sell that year: maturing debt to
+      roll (the wall itself), plus the primary deficit, plus interest — which compounds as old
+      3.4% coupons re-price to the new-issue rate. Values for every year are in the table below.</p>
+      <div class="legend" id="legend-stack"></div>
+      <div class="chart-wrap"><div id="chart-stack" role="img"
+        aria-label="Stacked column chart of US gross financing need by fiscal year; full values in the year-by-year table"></div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h3>Net interest expense as the coupon rolls up</h3>
+        <span class="note">$ trillions / fiscal year</span></div>
+      <p class="card-sub">The mechanical part of the squeeze: no new policy required. Every year
+      ~a third of the stock matures and re-prices from the legacy average coupon
+      (<span id="coupon-note">3.39%</span>) toward the new-issue rate. Hover for the blended
+      coupon in each year.</p>
+      <div class="chart-wrap"><div id="chart-interest" role="img"
+        aria-label="Line chart of projected US net interest expense; full values in the year-by-year table"></div></div>
+    </div>
+  </section>
+
+  <!-- ============ Global charts ============ -->
+  <section aria-labelledby="gl-h">
+    <p class="eyebrow" id="gl-h">Global · the Howell arithmetic</p>
+    <h2>Debt, the refi wall, and the liquidity it demands</h2>
+
+    <div class="card">
+      <div class="card-head"><h3>World debt vs. the liquidity required to carry it</h3>
+        <span class="note">$ trillions</span></div>
+      <p class="card-sub">Debt compounds at the growth rate you set; the liquidity line compounds
+      at the required rate. The annual refi wall is simply debt ÷ average maturity — the amount
+      that must find a buyer every single year.</p>
+      <div class="legend" id="legend-global"></div>
+      <div class="chart-wrap"><div id="chart-global" role="img"
+        aria-label="Line chart of global debt stock, required liquidity, and the annual refinancing wall; full values in the year-by-year table"></div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h3>New liquidity that must be created each year</h3>
+        <span class="note">$ trillions / year</span></div>
+      <p class="card-sub">The year-on-year increment of the required-liquidity path — the sum of
+      central-bank balance-sheet growth, commercial-bank credit, and shadow-bank/collateral
+      capacity that has to appear from somewhere for the wall to clear. This is the monetization
+      schedule.</p>
+      <div class="chart-wrap"><div id="chart-newliq" role="img"
+        aria-label="Column chart of required new global liquidity per year; full values in the year-by-year table"></div></div>
+    </div>
+  </section>
+
+  <!-- ============ tables ============ -->
+  <section aria-labelledby="tbl-h">
+    <p class="eyebrow" id="tbl-h">Table view</p>
+    <h2>Year by year</h2>
+    <div class="card">
+      <h3>United States</h3>
+      <div class="table-wrap"><table class="data" id="table-us"></table></div>
+    </div>
+    <div class="card">
+      <h3>Global</h3>
+      <div class="table-wrap"><table class="data" id="table-global"></table></div>
+    </div>
+  </section>
+
+  <!-- ============ escape valves ============ -->
+  <section aria-labelledby="exit-h">
+    <p class="eyebrow" id="exit-h">The core question</p>
+    <h2>Is monetization a mathematical truth?</h2>
+    <div class="prose">
+      <p>Strictly, no single line of algebra forces the printing press — it forces a <em>choice</em>.
+      The governing identity is that the debt ratio stabilizes only when the primary balance
+      covers the interest–growth gap: <strong>pb ≥ (r − g) ÷ (1 + g) × debt/GDP</strong>. Every
+      escape from the debt spiral has to satisfy that identity from one side or the other, and
+      there are exactly three ways to do it. Using the assumptions you've set above:</p>
+    </div>
+    <div class="kpis" style="margin-top:14px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));">
+      <div class="tile"><p class="t-label">Exit 1 · Austerity — the only non-debasement exit</p>
+        <p class="t-value" id="x-austerity">—</p>
+        <p class="t-sub" id="x-austerity-sub">—</p></div>
+      <div class="tile"><p class="t-label">Exit 2 · Outgrow it — nominal growth required</p>
+        <p class="t-value" id="x-growth">—</p>
+        <p class="t-sub" id="x-growth-sub">—</p></div>
+      <div class="tile"><p class="t-label">Exit 3 · Repression — funding cost that must be engineered</p>
+        <p class="t-value" id="x-repress">—</p>
+        <p class="t-sub" id="x-repress-sub">—</p></div>
+    </div>
+    <div class="callout">
+      <strong>The theorem, stated carefully:</strong> arithmetic alone doesn't force monetization —
+      it forces one of three exits. Exit&nbsp;1 requires a permanent fiscal consolidation on the
+      order of a trillion dollars a year, which no US Congress has ever sustained. Exits&nbsp;2
+      and&nbsp;3 both work by holding the growth of <em>money</em> above the return paid to
+      <em>bondholders</em> — nominal growth doing the diluting in one case, capped yields in the
+      other — and a sovereign can only guarantee r&nbsp;&lt;&nbsp;g by having its monetary system
+      absorb the issuance. So the precise claim is: <em>every politically available path runs
+      through monetization; the arithmetic just prices the alternatives.</em> This is also the
+      1946–1980 American playbook — debt/GDP fell from 106% to under 30% with barely a primary
+      surplus, via capped and negative real yields against fast nominal growth.
+    </div>
+  </section>
+
+  <!-- ============ social security ============ -->
+  <section aria-labelledby="ss-h">
+    <p class="eyebrow" id="ss-h">The other wall</p>
+    <h2>Social Security is on the same clock</h2>
+    <div class="kpis">
+      <div class="tile"><p class="t-label">OASI trust fund depleted</p>
+        <p class="t-value">Q4&nbsp;2032</p>
+        <p class="t-sub">2026 Trustees Report — one year earlier than projected in 2025</p></div>
+      <div class="tile"><p class="t-label">Automatic benefit cut at depletion</p>
+        <p class="t-value">−22%</p>
+        <p class="t-sub">78% of scheduled retirement benefits payable under current law</p></div>
+      <div class="tile"><p class="t-label">Combined OASDI funds depleted</p>
+        <p class="t-value">2034</p>
+        <p class="t-sub">−17% across retirement + disability if hypothetically merged</p></div>
+      <div class="tile"><p class="t-label">Cash deficits, next 10 years</p>
+        <p class="t-value">$3.8T</p>
+        <p class="t-sub">≈0.9% of GDP — already being financed by public borrowing</p></div>
+    </div>
+    <div class="prose" style="margin-top:16px">
+      <p>Two things make this part of the same story rather than a separate one. First, the trust
+      fund holds only Treasury IOUs: every dollar of "redemption" between now and 2032 is a dollar
+      of new public borrowing, already inside the deficit path above. Second, when depletion
+      arrives, history suggests Congress will not allow a 22% cut to land on 60&nbsp;million voters —
+      the toggle in the assumptions panel shows what papering over the gap with borrowing does to
+      the issuance wall from FY2033. Medicare's HI fund follows on a similar timeline. These are
+      obligations that, like the bonds, will most plausibly be met in nominal terms with created
+      money, not defaulted on explicitly.</p>
+    </div>
+  </section>
+
+  <!-- ============ japan vs us ============ -->
+  <section aria-labelledby="jp-h">
+    <p class="eyebrow" id="jp-h">The ceiling</p>
+    <h2>Why the US can't run Japan's playbook</h2>
+    <p class="card-sub" style="max-width:78ch">Japan proves a sovereign can carry 250% of GDP
+    without a nominal default. It does not prove the US can — the two systems fail in different
+    places, because the marginal buyer is a different animal.</p>
+    <div class="card">
+      <div class="table-wrap">
+      <table class="tracker">
+        <thead><tr><th>Structure</th><th>Japan</th><th>United States</th></tr></thead>
+        <tbody>
+          <tr><td>Gross debt / GDP</td><td>≈250% (net ≈140%)</td><td>≈101% held by public, CBO path to 120% by 2036</td></tr>
+          <tr><td>External position</td><td>Net <b>creditor</b>, NIIP ≈ +$3.7T — the world owes Japan</td><td>Net <b>debtor</b>, NIIP ≈ −$21T — the US owes the world</td></tr>
+          <tr><td>Who holds the bonds</td><td>≈90% domestic; BoJ owns roughly half the JGB market</td><td>≈⅓ foreign-held (≈$9.3T); Fed ≈15% and shrinking under QT (at baseline)</td></tr>
+          <tr><td>Current account</td><td>Persistent surplus funds the government at home</td><td>Persistent deficit — new debt needs external or levered buyers</td></tr>
+          <tr><td>Marginal buyer</td><td>Captive: domestic banks, insurers, pensions with home bias and no FX risk</td><td>Price-sensitive: foreign officials, hedge-fund basis trades, dealers at regulatory limits</td></tr>
+          <tr><td>Failure mode</td><td>Slow-burn currency erosion (yen), tolerated for decades</td><td>Fast repricing of the long end + dollar confidence — gilt-style, on a shorter fuse</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+    <div class="prose" style="margin-top:16px">
+      <p>Reserve-currency status cuts both ways, and this is the thought worth fleshing out. It
+      <em>raises</em> the ceiling in one sense: the world runs structurally short of dollars —
+      trade is invoiced in them, reserves are held in them, and there are roughly $13T of dollar
+      debts owed <em>outside</em> the US that need servicing — so there is a built-in bid for
+      dollar assets no other issuer enjoys, and some of any debasement is exported to foreign
+      holders rather than felt at home. But it <em>lowers</em> the ceiling in the sense that
+      matters here: the US cannot conscript its creditors. Japan's lenders are its own citizens,
+      who cannot leave the yen without leaving Japan; a third of America's lenders are foreigners
+      who hold Treasuries by choice, watch the fiscal arithmetic professionally, and since the
+      2022 reserve freezes have been quietly swapping marginal reserves into gold — the
+      likeliest engine of gold's repricing. So the binding constraint on the US is not quantity
+      but <em>trust at a price</em>: the debt ratio at which the long end and the dollar revolt
+      is well below 250%, and the revolt arrives as a repricing event, not a gradual squeeze.
+      Which is precisely why the US path leads through monetization <em>earlier</em> in
+      debt/GDP terms than Japan's did — the Fed becomes the captive buyer that Japan grew
+      organically, because nobody else is captive.</p>
+    </div>
+  </section>
+
+  <!-- ============ sequencing ============ -->
+  <section aria-labelledby="seq-h">
+    <p class="eyebrow" id="seq-h">Sequencing</p>
+    <h2>The great debasement, in order of operations</h2>
+    <div class="prose">
+      <p>Debasement is a ratio trade: debt over nominal GDP. You can shrink the numerator only
+      with surpluses nobody will vote for — or grow the denominator with created money and hope
+      output soaks up enough of it. Read that way, the sequencing hypothesis is coherent: China
+      moved first, easing the yuan and letting its central bank swap reserves into gold, then
+      paused when the currency pressure got uncomfortable — but its property-debt overhang gives
+      it the same arithmetic and little choice but to resume. The US, by this reading, hasn't
+      started: policy at the July-2026 baseline is still nominally tight, real yields are still
+      positive, QT is still (officially) running. The debasement phase for the issuer of the
+      reserve currency has to be prepared, not announced.</p>
+      <p>That is where the AI buildout fits. A debasement launched into a stagnant economy is
+      just inflation — money grows, output doesn't, prices take the whole adjustment. Launched
+      into an economy with a genuine productivity wave, the same money growth is partly absorbed
+      by real output: g rises, the r&nbsp;&lt;&nbsp;g gap gets easier to engineer, and the
+      inflation that remains is low-grade enough to be politically survivable. The trillion-dollar
+      AI capex cycle is, on this view, the denominator being built in advance — the 2020s
+      equivalent of the postwar boom that made 1946–1980 repression tolerable: debt/GDP fell 80
+      points while real yields were negative, because the real economy was compounding
+      underneath.</p>
+      <p>The honest counterpoints belong in the model too. The buildout is itself
+      credit-financed, so it adds private paper to the same wall it is meant to dilute. The
+      timing may not cooperate: the rollover bulge and the OASI depletion date land 2027–2033,
+      while broad AI productivity gains could easily arrive later. A hot economy raises r as well
+      as g, and the foreign third of the Treasury market gets a vote on every auction along the
+      way. Run-it-hot-then-debase is the strategy that makes sense of the pieces — but the wall's
+      timetable, not the strategist's, decides whether the economy is ready when the bill
+      arrives.</p>
+    </div>
+  </section>
+
+  <!-- ============ tracker ============ -->
+  <section aria-labelledby="track-h">
+    <p class="eyebrow" id="track-h">Monitoring</p>
+    <h2>How to watch it happen</h2>
+    <p class="card-sub" style="max-width:78ch">Monetization won't be announced — it arrives dressed
+    as "technical" operations: balance-sheet runoff quietly ending, issuance migrating to bills,
+    buybacks, regulatory relief that lets banks warehouse more bonds. These are the dials, in
+    roughly the order they move.</p>
+    <div class="card">
+      <div class="table-wrap">
+      <table class="tracker">
+        <thead><tr><th>Indicator</th><th>What it tells you</th><th>Where</th></tr></thead>
+        <tbody>
+          <tr><td>Fed balance sheet</td><td>The bluntest dial. Runoff (QT) ending, then assets growing again = overt monetization resuming, whatever it's called.</td><td><a href="https://fred.stlouisfed.org/series/WALCL" rel="noopener">FRED: WALCL</a></td></tr>
+          <tr><td>Bank reserves</td><td>The system's cash floor. Reserves below ~10–11% of GDP is the zone where 2019-style plumbing breaks appear.</td><td><a href="https://fred.stlouisfed.org/series/WRESBAL" rel="noopener">FRED: WRESBAL</a></td></tr>
+          <tr><td>Reverse repo (RRP)</td><td>The spare-cash buffer that quietly funded the 2023–24 bill deluge. Near zero = no cushion left; new supply bites reserves directly.</td><td><a href="https://fred.stlouisfed.org/series/RRPONTSYD" rel="noopener">FRED: RRPONTSYD</a></td></tr>
+          <tr><td>Treasury General Account</td><td>Treasury's checking account. Rebuilds drain liquidity from markets; drawdowns inject it. Big swings around debt-ceiling episodes.</td><td><a href="https://fred.stlouisfed.org/series/WTREGEN" rel="noopener">FRED: WTREGEN</a></td></tr>
+          <tr><td>Net liquidity</td><td>Fed balance sheet − TGA − RRP. The single best US proxy for the liquidity that actually reaches asset markets.</td><td>computed from the three above</td></tr>
+          <tr><td>Standing Repo Facility usage</td><td>Dealers paying the Fed's ceiling rate for cash = collateral is clogging the pipes. Persistent use precedes policy pivots.</td><td><a href="https://www.newyorkfed.org/markets/desk-operations/standing-repo-facility" rel="noopener">NY Fed desk data</a></td></tr>
+          <tr><td>SOFR − IORB spread</td><td>Repo trading above the rate banks earn at the Fed = reserve scarcity. Month-end spikes widening and persisting is the tell.</td><td><a href="https://fred.stlouisfed.org/series/SOFR" rel="noopener">FRED: SOFR / IORB</a></td></tr>
+          <tr><td>Bill share of issuance</td><td>Financing long-term deficits with short-term paper ("activist issuance") is stealth easing — it shifts duration risk off the market onto rollover risk.</td><td><a href="https://home.treasury.gov/policy-issues/financing-the-government/quarterly-refunding" rel="noopener">Treasury QRA</a></td></tr>
+          <tr><td>Treasury buybacks</td><td>Treasury repurchasing off-the-run bonds to keep the market functioning — a liquidity backstop that scales up under stress.</td><td><a href="https://home.treasury.gov/policy-issues/financing-the-government/treasury-buybacks" rel="noopener">Treasury.gov</a></td></tr>
+          <tr><td>Auction tails &amp; dealer take</td><td>Weak bid-to-cover, repeated tails, primary dealers forced to absorb large shares = private demand saturating at these yields.</td><td><a href="https://www.treasurydirect.gov/auctions/auction-query/" rel="noopener">TreasuryDirect results</a></td></tr>
+          <tr><td>10-yr term premium</td><td>The compensation investors demand for duration risk. A sustained climb is the bond market repricing the supply wall.</td><td><a href="https://www.newyorkfed.org/research/data_indicators/term-premia-tabs" rel="noopener">NY Fed ACM</a></td></tr>
+          <tr><td>MOVE index</td><td>Bond-market volatility. Spikes force levered basis-trade unwinds — the accelerant in every recent Treasury stress event.</td><td>ICE BofA MOVE (any terminal)</td></tr>
+          <tr><td>Swap spreads</td><td>Deeply negative long-end spreads = balance-sheet scarcity; sharp moves flag dealer capacity hitting its regulatory limits.</td><td>terminal / broker data</td></tr>
+          <tr><td>Foreign official demand</td><td>The marginal buyer stepping back. Falling official holdings shift the wall onto price-sensitive domestic buyers — and eventually the Fed.</td><td><a href="https://ticdata.treasury.gov/" rel="noopener">Treasury TIC</a></td></tr>
+          <tr><td>Global liquidity aggregates</td><td>The direct measure of the money side of this page: global M2, CrossBorder Capital's GLI. Bitcoin and gold trade as high-beta gauges of the same flow.</td><td><a href="https://capitalwars.substack.com/" rel="noopener">Capital Wars</a> / global M2 trackers</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ playbook ============ -->
+  <section aria-labelledby="play-h">
+    <p class="eyebrow" id="play-h">Bond-market reaction function</p>
+    <h2>The playbook, in sequence</h2>
+    <div class="stages">
+      <div class="stage">
+        <h3>Digestion</h3>
+        <p>Supply is absorbed but the price of absorption rises: curve bear-steepens, term premium
+        grinds higher, long-end auctions get sloppier. Equities can rally through this stage —
+        liquidity is still growing.</p>
+        <p class="watch"><b>Watch:</b> term premium, bill share, bid-to-cover.</p>
+      </div>
+      <div class="stage">
+        <h3>Strain</h3>
+        <p>Private balance sheets saturate. Auction tails repeat, dealer take-downs jump, swap
+        spreads go more negative, MOVE lifts. Officials start talking about "market functioning"
+        and buybacks scale up.</p>
+        <p class="watch"><b>Watch:</b> dealer take, swap spreads, MOVE, buyback sizes.</p>
+      </div>
+      <div class="stage">
+        <h3>Break</h3>
+        <p>A plumbing event forces the issue — repo Sep&nbsp;2019, COVID dash-for-cash Mar&nbsp;2020
+        ($1.6T of QE in weeks), UK gilts/LDI Oct&nbsp;2022 (BoE buying within 48&nbsp;hours), SVB
+        Mar&nbsp;2023 (BTFP overnight). The interval from "stress" to "backstop" is measured in days.</p>
+        <p class="watch"><b>Watch:</b> SOFR−IORB, SRF usage, an overnight facility with a new acronym.</p>
+      </div>
+      <div class="stage">
+        <h3>Absorption</h3>
+        <p>The state balance sheet takes the wall, one euphemism at a time: QT ends → "reserve
+        management" bill purchases → SLR relief so banks can warehouse bonds → QE proper → and at
+        the limit, yield-curve control. Bonds are capped; the currency and real assets take the
+        adjustment instead.</p>
+        <p class="watch"><b>Watch:</b> Fed balance sheet inflection, SLR rule changes, gold, bitcoin.</p>
+      </div>
+    </div>
+    <div class="callout" style="margin-top:18px">
+      The end-state is the point of the whole exercise: <strong>nominal default is off the table,
+      because the bonds are the system's collateral — so the adjustment is routed through the unit
+      of account.</strong> Bondholders get repaid in full, in money that buys less. The model above
+      is an attempt to put a number and a date range on how much of that money there has to be.
+    </div>
+  </section>
+
+  <!-- ============ footer ============ -->
+  <footer>
+    <p class="eyebrow">Sources &amp; caveats</p>
+    <ul>
+      <li>US totals &amp; average rate: <a href="https://www.jec.senate.gov/public/index.cfm/republicans/2026/6/national-debt-reaches-39-20-trillion-increased-2-99-trillion-year-over-year-increased-10-94-trillion-in-five-years" rel="noopener">Joint Economic Committee debt updates</a> (total debt $39.2T, ~3.39% avg on ~$31T marketable, May–June 2026).</li>
+      <li>Deficit &amp; interest path: <a href="https://www.cbo.gov/publication/61882" rel="noopener">CBO, Budget &amp; Economic Outlook 2026–2036</a> (deficit $1.9T FY26 → $3.1T FY36; net interest $1.0T → $2.1T; debt/GDP 101% → 120%), and <a href="https://www.crfb.org/papers/cbos-february-2026-budget-and-economic-outlook" rel="noopener">CRFB's analysis</a>.</li>
+      <li>Maturity wall: <a href="https://realinvestmentadvice.com/resources/blog/a-third-of-us-debt-matures-in-2026/" rel="noopener">≈one-third of US marketable debt matures within a year</a>.</li>
+      <li>Global framework: Michael Howell / CrossBorder Capital — <a href="https://capitalwars.substack.com/" rel="noopener">Capital Wars</a>; <a href="https://fnarena.com/index.php/2026/03/31/interview-michael-howell-crossborder-capital/" rel="noopener">FNArena interview (Mar 2026)</a> ($350T debt, ~7yr maturity, ~$50T/yr refi, 70–80% of transactions are rollovers, liquidity ~$189T).</li>
+      <li>Social Security: <a href="https://www.ssa.gov/oact/trsum/" rel="noopener">2026 Trustees Report</a> and <a href="https://www.crfb.org/papers/analysis-2026-social-security-trustees-report" rel="noopener">CRFB analysis</a> (OASI depleted Q4 2032, 78% payable; OASDI 2034; $3.8T 10-yr cash deficit).</li>
+      <li>External positions: <a href="https://www.bea.gov/news/2026/us-international-transactions-and-investment-position-1st-quarter-2026-and-annual-update" rel="noopener">BEA, US NIIP −$21.3T (Q1 2026)</a>; <a href="https://www.congress.gov/crs-product/RS22331" rel="noopener">CRS: foreign holdings ≈$9.3T, ~31–33% of public debt</a>; Japan NIIP ≈ +$3.7T, ≈90% of JGBs domestically held, BoJ ≈ half the market (MoF/BoJ data).</li>
+      <li>This is a stylized teaching model, not a forecast: one blended new-issue rate, bills counted once per year, no recession/rate-cut scenarios, no FX or cross-border composition effects. Change the inputs — the point is the shape of the arithmetic, which survives any reasonable set of them.</li>
+    </ul>
+  </footer>
+</main>
+
+<div id="tip" role="status" aria-hidden="true"></div>
+
+<script>
+"use strict";
+/* =================== model =================== */
+const DEFAULTS = {
+  usDebt: 30.3, usCoupon: 3.39, usRate: 4.25, usRoll: 33, usPrimary: 2.9,
+  usGdp: 30.5, usGdpG: 4.0, horizon: 10, ss: false,
+  gDebt: 350, gLiq: 189, gMat: 7, gDg: 5.0, gLg: 8.0,
+};
+const START_FY = 2026;
+
+const $ = (id) => document.getElementById(id);
+const FIELDS = {
+  usDebt: "i-debt", usCoupon: "i-coupon", usRate: "i-rate", usRoll: "i-roll",
+  usPrimary: "i-primary", usGdp: "i-gdp", usGdpG: "i-gdpg", horizon: "i-horizon",
+  gDebt: "g-debt", gLiq: "g-liq", gMat: "g-mat", gDg: "g-dg", gLg: "g-lg",
+};
+
+function readInputs() {
+  const p = {};
+  for (const [k, id] of Object.entries(FIELDS)) {
+    const v = parseFloat($(id).value);
+    p[k] = Number.isFinite(v) ? v : DEFAULTS[k];
+  }
+  p.horizon = Math.min(15, Math.max(5, Math.round(p.horizon)));
+  p.ss = $("i-ss").checked;
+  return p;
+}
+
+function computeUS(p) {
+  const rows = [];
+  let debt = p.usDebt, coupon = p.usCoupon / 100, gdp = p.usGdp;
+  const rate = p.usRate / 100, roll = p.usRoll / 100;
+  let ssExtra = 0.45;
+  for (let t = 0; t < p.horizon; t++) {
+    const fy = START_FY + t;
+    const interest = debt * coupon;
+    const primary = gdp * (p.usPrimary / 100) + (p.ss && fy >= 2033 ? ssExtra : 0);
+    if (p.ss && fy >= 2033) ssExtra *= 1.05;
+    const deficit = primary + interest;
+    const maturing = debt * roll;
+    const gross = maturing + deficit;
+    const debtNext = debt + deficit;
+    const couponNext = (coupon * (debt - maturing) + rate * gross) / debtNext;
+    rows.push({ fy, debt, coupon, interest, primary, deficit, maturing, gross,
+                debtGdp: debt / gdp });
+    debt = debtNext; coupon = couponNext; gdp *= 1 + p.usGdpG / 100;
+  }
+  return rows;
+}
+
+function computeGlobal(p) {
+  const rows = [];
+  let debt = p.gDebt, liq = p.gLiq;
+  for (let t = 0; t < p.horizon; t++) {
+    const refi = debt / p.gMat;
+    const netNew = debt * (p.gDg / 100);
+    const newLiq = liq * (p.gLg / 100);
+    rows.push({ year: START_FY + t, debt, refi, netNew,
+                refiShare: refi / (refi + netNew),
+                reqLiq: liq, newLiq });
+    debt += netNew; liq += newLiq;
+  }
+  return rows;
+}
+
+/* =================== formatting =================== */
+const fT  = (v, d = 1) => "$" + v.toFixed(d) + "T";
+const fPc = (v, d = 1) => (v * 100).toFixed(d) + "%";
+
+/* =================== tooltip =================== */
+const tip = $("tip");
+function showTip(x, y, title, rows, foot) {
+  tip.textContent = "";
+  const t = document.createElement("div");
+  t.className = "tt-title"; t.textContent = title; tip.appendChild(t);
+  for (const r of rows) {
+    const div = document.createElement("div"); div.className = "tt-row";
+    const key = document.createElement("span"); key.className = "tt-key";
+    key.style.background = r.color || "transparent";
+    const name = document.createElement("span"); name.className = "tt-name"; name.textContent = r.name;
+    const val = document.createElement("span"); val.className = "tt-val"; val.textContent = r.value;
+    div.append(key, name, val); tip.appendChild(div);
+  }
+  if (foot) { const f = document.createElement("div"); f.className = "tt-foot"; f.textContent = foot; tip.appendChild(f); }
+  tip.style.display = "block";
+  const w = tip.offsetWidth, h = tip.offsetHeight;
+  let px = x + 14, py = y + 14;
+  if (px + w > innerWidth - 8) px = x - w - 14;
+  if (py + h > innerHeight - 8) py = y - h - 14;
+  tip.style.left = px + "px"; tip.style.top = py + "px";
+}
+function hideTip() { tip.style.display = "none"; }
+
+/* =================== svg helpers =================== */
+const NS = "http://www.w3.org/2000/svg";
+function svgEl(tag, attrs) {
+  const e = document.createElementNS(NS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  return e;
+}
+function niceTicks(max) {
+  const steps = [0.25, 0.5, 1, 2, 2.5, 5, 10, 20, 25, 50, 100, 200];
+  for (const s of steps) if (max / s <= 5.2) {
+    const ticks = []; for (let v = 0; v <= max + 1e-9; v += s) ticks.push(v);
+    return { step: s, ticks, top: ticks[ticks.length - 1] < max ? ticks[ticks.length - 1] + s : ticks[ticks.length - 1] };
+  }
+  return { step: max / 4, ticks: [0, max / 4, max / 2, 3 * max / 4, max], top: max };
+}
+function chartFrame(host, W, H, padL, padR, padT, padB, yMax, unit) {
+  host.textContent = "";
+  const svg = svgEl("svg", { viewBox: `0 0 ${W} ${H}`, width: "100%", style: "min-width:560px" });
+  host.appendChild(svg);
+  const plotW = W - padL - padR, plotH = H - padT - padB;
+  const { ticks, top } = niceTicks(yMax);
+  const y = (v) => padT + plotH - (v / top) * plotH;
+  for (const tv of ticks) {
+    svg.appendChild(svgEl("line", { x1: padL, x2: W - padR, y1: y(tv), y2: y(tv),
+      stroke: tv === 0 ? "var(--baseline)" : "var(--grid)", "stroke-width": 1 }));
+    if (tv > 0) {
+      const lbl = svgEl("text", { x: padL - 8, y: y(tv) + 4, "text-anchor": "end",
+        "font-size": 11, fill: "var(--text-muted)", style: "font-variant-numeric:tabular-nums" });
+      lbl.textContent = tv + (unit || "");
+      svg.appendChild(lbl);
+    }
+  }
+  return { svg, plotW, plotH, padL, padT, y, top, W, H, padB };
+}
+function xLabels(f, labels, xAt) {
+  labels.forEach((txt, i) => {
+    const t = svgEl("text", { x: xAt(i), y: f.padT + f.plotH + 18, "text-anchor": "middle",
+      "font-size": 11, fill: "var(--text-muted)", style: "font-variant-numeric:tabular-nums" });
+    t.textContent = txt; f.svg.appendChild(t);
+  });
+}
+
+/* rounded-top bar path (square baseline, radius clamped) */
+function topRoundedRect(x, yTop, w, h, r) {
+  r = Math.max(0, Math.min(r, h, w / 2));
+  return `M${x},${yTop + h} L${x},${yTop + r} Q${x},${yTop} ${x + r},${yTop} L${x + w - r},${yTop} Q${x + w},${yTop} ${x + w},${yTop + r} L${x + w},${yTop + h} Z`;
+}
+
+/* =================== charts =================== */
+function renderStackedColumns(host, rows, series) {
+  // series: [{key, name, cssVar}] bottom → top
+  const H = 300, W = 960, padL = 46, padR = 16, padT = 14, padB = 30;
+  const maxTotal = Math.max(...rows.map(r => series.reduce((s, sr) => s + r[sr.key], 0)));
+  const f = chartFrame(host, W, H, padL, padR, padT, padB, maxTotal, "");
+  const band = f.plotW / rows.length;
+  const barW = Math.min(24, band * 0.55);
+  const xAt = (i) => padL + band * i + band / 2;
+  const GAP = 2;
+
+  rows.forEach((r, i) => {
+    const g = svgEl("g", { class: "col-band", tabindex: "0", role: "img" });
+    let acc = 0;
+    const segs = [];
+    series.forEach((sr, si) => {
+      const v = r[sr.key];
+      const y0 = f.y(acc), y1 = f.y(acc + v);
+      let hpx = y0 - y1 - (si < series.length - 1 ? GAP : 0);
+      if (hpx < 0.5) hpx = Math.max(0.5, y0 - y1);
+      const x = xAt(i) - barW / 2;
+      if (si === series.length - 1) {
+        segs.push(svgEl("path", { d: topRoundedRect(x, y0 - (y0 - y1), barW, y0 - y1, 4),
+          fill: `var(${sr.cssVar})`, class: "bar-seg" }));
+      } else {
+        segs.push(svgEl("rect", { x, y: y1 + GAP, width: barW, height: hpx,
+          fill: `var(${sr.cssVar})`, class: "bar-seg" }));
+      }
+      acc += v;
+    });
+    segs.forEach(s => g.appendChild(s));
+    // oversized transparent hit target (full band)
+    const hit = svgEl("rect", { x: padL + band * i, y: padT, width: band, height: f.plotH,
+      fill: "transparent" });
+    g.appendChild(hit);
+    const total = series.reduce((s, sr) => s + r[sr.key], 0);
+    g.setAttribute("aria-label",
+      `FY${r.fy}: total ${fT(total)} — ` + series.map(sr => `${sr.name} ${fT(r[sr.key])}`).join(", "));
+    const rowsTip = () => series.slice().reverse().map(sr => ({
+      color: getComputedStyle(document.documentElement).getPropertyValue(sr.cssVar),
+      name: sr.name, value: fT(r[sr.key], 2),
+    })).concat([{ color: "transparent", name: "Total to sell", value: fT(total, 2) }]);
+    const over = (e) => {
+      g.style.opacity = "0.85";
+      const pt = e.touches ? e.touches[0] : e;
+      showTip(pt.clientX ?? (innerWidth / 2), pt.clientY ?? 200, "FY" + r.fy, rowsTip());
+    };
+    g.addEventListener("pointermove", over);
+    g.addEventListener("pointerleave", () => { g.style.opacity = ""; hideTip(); });
+    g.addEventListener("focus", () => {
+      const b = g.getBoundingClientRect();
+      g.style.opacity = "0.85";
+      showTip(b.left + b.width / 2, b.top + 40, "FY" + r.fy, rowsTip());
+    });
+    g.addEventListener("blur", () => { g.style.opacity = ""; hideTip(); });
+    f.svg.appendChild(g);
+  });
+  xLabels(f, rows.map(r => "’" + String(r.fy).slice(2)), xAt);
+}
+
+function renderSingleColumns(host, labels, values, name, cssVar, fmt) {
+  const H = 280, W = 960, padL = 46, padR = 16, padT = 20, padB = 30;
+  const f = chartFrame(host, W, H, padL, padR, padT, padB, Math.max(...values), "");
+  const band = f.plotW / values.length;
+  const barW = Math.min(24, band * 0.55);
+  const xAt = (i) => padL + band * i + band / 2;
+  values.forEach((v, i) => {
+    const g = svgEl("g", { class: "col-band", tabindex: "0", role: "img" });
+    const x = xAt(i) - barW / 2, yTop = f.y(v);
+    g.appendChild(svgEl("path", { d: topRoundedRect(x, yTop, barW, f.y(0) - yTop, 4),
+      fill: `var(${cssVar})`, class: "bar-seg" }));
+    g.appendChild(svgEl("rect", { x: padL + band * i, y: padT, width: band, height: f.plotH, fill: "transparent" }));
+    g.setAttribute("aria-label", `${labels[i]}: ${fmt(v)}`);
+    const over = (e) => { g.style.opacity = "0.85";
+      showTip(e.clientX, e.clientY, labels[i],
+        [{ color: getComputedStyle(document.documentElement).getPropertyValue(cssVar), name, value: fmt(v) }]); };
+    g.addEventListener("pointermove", over);
+    g.addEventListener("pointerleave", () => { g.style.opacity = ""; hideTip(); });
+    g.addEventListener("focus", () => { const b = g.getBoundingClientRect();
+      g.style.opacity = "0.85";
+      showTip(b.left + b.width / 2, b.top + 30, labels[i],
+        [{ color: getComputedStyle(document.documentElement).getPropertyValue(cssVar), name, value: fmt(v) }]); });
+    g.addEventListener("blur", () => { g.style.opacity = ""; hideTip(); });
+    f.svg.appendChild(g);
+    // cap labels on first and last columns only
+    if (i === 0 || i === values.length - 1) {
+      const t = svgEl("text", { x: xAt(i), y: yTop - 6, "text-anchor": "middle",
+        "font-size": 11.5, "font-weight": 600, fill: "var(--text-secondary)" });
+      t.textContent = fmt(v); f.svg.appendChild(t);
+    }
+  });
+  xLabels(f, labels.map(l => "’" + String(l).slice(2)), xAt);
+}
+
+function renderLines(host, labels, seriesList, opts) {
+  // seriesList: [{name, cssVar, values, tipFmt?}]; opts: {unit, extraTipRow?}
+  const H = 300, W = 960, padL = 46, padR = 118, padT = 14, padB = 30;
+  const maxV = Math.max(...seriesList.flatMap(s => s.values));
+  const f = chartFrame(host, W, H, padL, padR, padT, padB, maxV, "");
+  const n = labels.length;
+  const xAt = (i) => padL + (n === 1 ? 0 : (f.plotW / (n - 1)) * i);
+
+  for (const s of seriesList) {
+    const pts = s.values.map((v, i) => `${xAt(i)},${f.y(v)}`).join(" ");
+    f.svg.appendChild(svgEl("polyline", { points: pts, fill: "none",
+      stroke: `var(${s.cssVar})`, "stroke-width": 2, "stroke-linecap": "round", "stroke-linejoin": "round" }));
+    const li = s.values.length - 1;
+    // end marker: 2px surface ring under an 8px dot
+    f.svg.appendChild(svgEl("circle", { cx: xAt(li), cy: f.y(s.values[li]), r: 6, fill: "var(--surface-1)" }));
+    f.svg.appendChild(svgEl("circle", { cx: xAt(li), cy: f.y(s.values[li]), r: 4, fill: `var(${s.cssVar})` }));
+    // direct end label (value + name)
+    const t = svgEl("text", { x: xAt(li) + 10, y: f.y(s.values[li]) + 4, "font-size": 11.5,
+      "font-weight": 600, fill: "var(--text-primary)" });
+    t.textContent = (s.tipFmt || fT)(s.values[li]);
+    f.svg.appendChild(t);
+    const t2 = svgEl("text", { x: xAt(li) + 10, y: f.y(s.values[li]) + 16, "font-size": 10.5,
+      fill: "var(--text-muted)" });
+    t2.textContent = s.name;
+    f.svg.appendChild(t2);
+  }
+  xLabels(f, labels.map(l => "’" + String(l).slice(2)), xAt);
+
+  // crosshair + tooltip
+  const vline = svgEl("line", { y1: padT, y2: padT + f.plotH, stroke: "var(--baseline)",
+    "stroke-width": 1, visibility: "hidden" });
+  f.svg.appendChild(vline);
+  const overlay = svgEl("rect", { x: padL, y: padT, width: f.plotW, height: f.plotH, fill: "transparent" });
+  overlay.addEventListener("pointermove", (e) => {
+    const rect = f.svg.getBoundingClientRect();
+    const scale = f.W / rect.width;
+    const px = (e.clientX - rect.left) * scale;
+    let i = Math.round((px - padL) / (f.plotW / (n - 1)));
+    i = Math.max(0, Math.min(n - 1, i));
+    vline.setAttribute("x1", xAt(i)); vline.setAttribute("x2", xAt(i));
+    vline.setAttribute("visibility", "visible");
+    const rows = seriesList.map(s => ({
+      color: getComputedStyle(document.documentElement).getPropertyValue(s.cssVar),
+      name: s.name, value: (s.tipFmt || ((v) => fT(v, 2)))(s.values[i]),
+    }));
+    if (opts && opts.extraTipRow) rows.push(opts.extraTipRow(i));
+    showTip(e.clientX, e.clientY, String(labels[i]), rows);
+  });
+  overlay.addEventListener("pointerleave", () => { vline.setAttribute("visibility", "hidden"); hideTip(); });
+  f.svg.appendChild(overlay);
+}
+
+/* =================== legends, tiles, tables =================== */
+function legend(el, items, shape) {
+  el.textContent = "";
+  for (const it of items) {
+    const k = document.createElement("span"); k.className = "key";
+    const sw = document.createElement("span");
+    sw.className = shape === "line" ? "linekey" : "swatch";
+    sw.style.background = `var(${it.cssVar})`;
+    const label = document.createElement("span"); label.textContent = it.name;
+    k.append(sw, label); el.appendChild(k);
+  }
+}
+
+function tile(label, value, sub, delta) {
+  const d = document.createElement("div"); d.className = "tile";
+  const l = document.createElement("p"); l.className = "t-label"; l.textContent = label;
+  const v = document.createElement("p"); v.className = "t-value"; v.textContent = value;
+  d.append(l, v);
+  if (delta) { const dd = document.createElement("span"); dd.className = "t-delta bad";
+    dd.textContent = delta; v.append(" "); v.appendChild(dd); }
+  if (sub) { const s = document.createElement("p"); s.className = "t-sub"; s.textContent = sub; d.appendChild(s); }
+  return d;
+}
+
+function buildTable(el, headers, rows) {
+  el.textContent = "";
+  const thead = document.createElement("thead"); const trh = document.createElement("tr");
+  for (const h of headers) { const th = document.createElement("th"); th.textContent = h; trh.appendChild(th); }
+  thead.appendChild(trh); el.appendChild(thead);
+  const tbody = document.createElement("tbody");
+  for (const r of rows) {
+    const tr = document.createElement("tr");
+    for (const c of r) { const td = document.createElement("td"); td.textContent = c; tr.appendChild(td); }
+    tbody.appendChild(tr);
+  }
+  el.appendChild(tbody);
+}
+
+/* =================== render =================== */
+function render() {
+  const p = readInputs();
+  const us = computeUS(p);
+  const gl = computeGlobal(p);
+  const last = us[us.length - 1], first = us[0];
+  const gLast = gl[gl.length - 1], gFirst = gl[0];
+  const endFY = last.fy;
+
+  // KPIs
+  const kpi = $("kpi-row"); kpi.textContent = "";
+  kpi.append(
+    tile(`US gross financing need, FY${first.fy}`, fT(first.gross),
+      `${fT(first.maturing)} rollovers + ${fT(first.deficit)} deficit — ≈${fPc(first.gross / p.usGdp, 0)} of GDP`),
+    tile(`Cumulative US issuance through FY${endFY}`,
+      fT(us.reduce((s, r) => s + r.gross, 0), 0),
+      "every dollar needs a buyer — or a money-printer"),
+    tile(`US net interest, FY${endFY}`, fT(last.interest, 2),
+      `blended coupon ${ (last.coupon * 100).toFixed(2) }% — was ${fT(first.interest, 2)} in FY${first.fy}`,
+      "+" + Math.round((last.interest / first.interest - 1) * 100) + "%"),
+    tile(`US debt held by public, FY${endFY}`, fT(last.debt + last.deficit, 0),
+      `${fPc((last.debt + last.deficit) / (p.usGdp * Math.pow(1 + p.usGdpG / 100, p.horizon)), 0)} of GDP, vs ${fPc(first.debtGdp, 0)} today`),
+    tile("Rollovers as share of global financing", fPc(gFirst.refiShare, 0),
+      `${fT(gFirst.refi, 0)}/yr refi vs ${fT(gFirst.netNew, 1)}/yr net new — Howell's 70–80%, derived`),
+    tile(`New liquidity required by ${START_FY + p.horizon - 1}`,
+      fT(gl.reduce((s, r) => s + r.newLiq, 0), 0),
+      `global liquidity ${fT(p.gLiq, 0)} → ${fT(gLast.reqLiq + gLast.newLiq, 0)} at ${p.gLg.toFixed(1)}%/yr — ` +
+      (gl.reduce((s, r) => s + r.newLiq, 0) >= p.gLiq ? "more than doubling the stock" : "vs today's stock")),
+  );
+
+  // coupon note
+  $("coupon-note").textContent = p.usCoupon.toFixed(2) + "%";
+
+  // escape valves: stabilize d(debt/GDP)=0  ⇔  pb = (r−g)/(1+g)·d
+  {
+    const r = p.usRate / 100, g = p.usGdpG / 100, d = first.debtGdp, pb = -p.usPrimary / 100;
+    const pbStar = (r - g) / (1 + g) * d;          // primary balance that stabilizes the ratio
+    const swing = pbStar - pb;                      // consolidation needed, share of GDP
+    const swingT = swing * p.usGdp;
+    $("x-austerity").textContent = fT(swingT, 2) + "/yr";
+    $("x-austerity-sub").textContent =
+      `Permanent consolidation: primary balance must move from ${(pb * 100).toFixed(1)}% to ` +
+      `${(pbStar * 100) >= 0 ? "+" : ""}${(pbStar * 100).toFixed(1)}% of GDP (${(swing * 100).toFixed(1)} pts) — ` +
+      `roughly a defense budget, cut every year, forever. Never sustained in the postwar era.`;
+    const gStar = (d + pb) !== 0 ? (r * d - pb) / (d + pb) : NaN;
+    $("x-growth").textContent = Number.isFinite(gStar) ? (gStar * 100).toFixed(1) + "%/yr" : "—";
+    $("x-growth-sub").textContent =
+      `Nominal GDP growth that stabilizes the ratio with today's primary deficit, vs ` +
+      `${p.usGdpG.toFixed(1)}% assumed. Whatever real growth (AI or otherwise) doesn't supply, ` +
+      `inflation must — which is debasement by the denominator.`;
+    const rStar = g + pb * (1 + g) / d;
+    $("x-repress").textContent = (rStar * 100).toFixed(1) + "%";
+    $("x-repress-sub").textContent =
+      `Average funding cost that stabilizes the ratio — ${( (g - rStar) * 100).toFixed(1)} pts below ` +
+      `nominal growth, vs a ${p.usRate.toFixed(2)}% market rate. Only the central bank can hold ` +
+      `yields there against this supply: capped yields ARE monetization.`;
+  }
+
+  // charts
+  const stackSeries = [
+    { key: "maturing", name: "Maturing debt to roll", cssVar: "--series-1" },
+    { key: "primary",  name: "Primary deficit",       cssVar: "--series-2" },
+    { key: "interest", name: "Interest",              cssVar: "--series-3" },
+  ];
+  legend($("legend-stack"), stackSeries, "rect");
+  renderStackedColumns($("chart-stack"), us, stackSeries);
+
+  renderLines($("chart-interest"), us.map(r => "FY" + r.fy),
+    [{ name: "Net interest", cssVar: "--series-1", values: us.map(r => r.interest),
+       tipFmt: (v) => fT(v, 2) }],
+    { extraTipRow: (i) => ({ color: "transparent", name: "Blended coupon",
+        value: (us[i].coupon * 100).toFixed(2) + "%" }) });
+
+  const globalSeries = [
+    { name: "World debt", cssVar: "--series-1", values: gl.map(r => r.debt), tipFmt: (v) => fT(v, 0) },
+    { name: "Required liquidity", cssVar: "--series-2", values: gl.map(r => r.reqLiq), tipFmt: (v) => fT(v, 0) },
+    { name: "Annual refi wall", cssVar: "--series-3", values: gl.map(r => r.refi), tipFmt: (v) => fT(v, 0) },
+  ];
+  legend($("legend-global"), globalSeries, "line");
+  renderLines($("chart-global"), gl.map(r => r.year), globalSeries);
+
+  renderSingleColumns($("chart-newliq"), gl.map(r => r.year), gl.map(r => r.newLiq),
+    "Required new liquidity", "--series-1", (v) => fT(v, 1));
+
+  // tables
+  buildTable($("table-us"),
+    ["Fiscal year", "Debt, $T", "Blended coupon", "Interest, $T", "Primary deficit, $T",
+     "Total deficit, $T", "Rollovers, $T", "Gross need, $T", "Debt / GDP"],
+    us.map(r => ["FY" + r.fy, r.debt.toFixed(1), (r.coupon * 100).toFixed(2) + "%",
+      r.interest.toFixed(2), r.primary.toFixed(2), r.deficit.toFixed(2),
+      r.maturing.toFixed(1), r.gross.toFixed(1), Math.round(r.debtGdp * 100) + "%"]));
+
+  buildTable($("table-global"),
+    ["Year", "World debt, $T", "Refi wall, $T/yr", "Net new borrowing, $T/yr",
+     "Rollover share", "Liquidity stock, $T", "New liquidity required, $T/yr"],
+    gl.map(r => [String(r.year), Math.round(r.debt), Math.round(r.refi), r.netNew.toFixed(1),
+      Math.round(r.refiShare * 100) + "%", Math.round(r.reqLiq), r.newLiq.toFixed(1)]));
+}
+
+/* =================== wiring =================== */
+document.getElementById("controls").addEventListener("input", render);
+document.getElementById("reset-btn").addEventListener("click", () => {
+  for (const [k, id] of Object.entries(FIELDS)) $(id).value = DEFAULTS[k];
+  $("i-ss").checked = DEFAULTS.ss;
+  render();
+});
+render();
+</script>
+</body>
+</html>

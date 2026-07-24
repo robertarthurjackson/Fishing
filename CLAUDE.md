@@ -14,6 +14,10 @@ Single-file app — everything lives in `index.html`: HTML, CSS, and vanilla JS.
 
 `spots-import-columbia-valley.json` is a standalone export file with researched seed data — not loaded at runtime (the same data is in the `SEED_SPOTS` array in the JS).
 
+## Other apps in this repo
+
+`debt-wall.html` — unrelated to the map: a standalone single-file macro model of the sovereign debt wall, refinancing needs, and required money creation (US Treasury math + Michael Howell's global-liquidity framework). Fully self-contained: vanilla JS, hand-rolled SVG charts, zero dependencies (no CDN), light/dark via the same `prefers-color-scheme` + `data-theme` token pattern. Baseline figures are as-of July 2026 and editable in the UI; sources cited in its footer. Open directly in a browser.
+
 ## How to run
 
 Open `index.html` in a browser. No server needed (though a local server avoids CORS issues with some tile providers):
