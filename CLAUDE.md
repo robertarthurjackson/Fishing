@@ -1,6 +1,6 @@
 # Fishing Spots
 
-Interactive map app for cataloguing fishing spots across the BC East Kootenay (Fairmont / Columbia Valley, Cranbrook / Elk Valley) and Calgary area.
+Interactive map app for cataloguing fishing spots across the BC Kootenays (Fairmont / Columbia Valley, Cranbrook / Elk Valley, Kootenay Lake / Crawford Bay), the Calgary area, and the Methow Valley in Washington.
 
 ## Architecture
 
@@ -10,7 +10,7 @@ Single-file app — everything lives in `index.html`: HTML, CSS, and vanilla JS.
 - **Data**: All spots stored in `localStorage` under key `fishing-spots-v1`. Seed spots (researched, baked into the JS) are merged on first load and tracked separately so deleted seeds don't resurrect
 - **Geometry types**: marker (pin), line (river stretch), polygon (zone) — each spot has exactly one
 - **Ratings**: 4 criteria (Fish quality, Action, Ease of access, Scenery), each 0–5 stars. Overall score = mean of rated criteria
-- **Regions**: `fairmont`, `south` (Cranbrook/Elk Valley), `calgary`, `other`
+- **Regions**: `fairmont`, `south` (Cranbrook/Elk Valley), `westkootenay` (Kootenay Lake / Crawford Bay), `calgary`, `methow` (Methow Valley WA), `other`. Adding a region means touching `REGION_LABELS`, `REGION_VIEWS`, both `<select>` lists, and the region-jump buttons + their listeners.
 
 `spots-import-columbia-valley.json` is a standalone export file with researched seed data — not loaded at runtime (the same data is in the `SEED_SPOTS` array in the JS).
 
