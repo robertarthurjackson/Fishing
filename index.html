@@ -343,9 +343,98 @@
   @media (prefers-color-scheme: dark) {
     .leaflet-layer.dimmable { filter: brightness(0.85) contrast(1.05); }
   }
+
+  /* ---------- Nav toggle (mobile only) ---------- */
+  /* Hidden on desktop, where the sidebar is always in view. */
+  #nav-toggle,
+  #nav-scrim { display: none; }
+
+  #nav-toggle {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    width: 42px;
+    height: 42px;
+    padding: 0;
+    border-radius: 10px;
+    background: var(--panel);
+    box-shadow: var(--shadow);
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+  }
+  #nav-toggle span {
+    display: block;
+    width: 18px;
+    height: 2px;
+    border-radius: 2px;
+    background: var(--text);
+    transition: transform 0.2s ease, opacity 0.2s ease;
+  }
+
+  /* ---------- Mobile layout ---------- */
+  /* The sidebar leaves the flex flow and becomes an overlay, so the map gets
+     the full width. Because it overlays rather than resizes the map, toggling
+     it needs no Leaflet invalidateSize() call. */
+  @media (max-width: 760px) {
+    #nav-toggle { display: flex; z-index: 1006; }
+
+    #sidebar {
+      position: fixed;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      width: min(86vw, 340px);
+      min-width: 0;
+      z-index: 1005;
+      transform: translateX(-100%);
+      transition: transform 0.25s ease;
+    }
+    body.nav-open #sidebar { transform: none; }
+
+    /* Clear the toggle button, which floats above the panel. */
+    #sidebar header { padding-left: 62px; }
+
+    #nav-scrim {
+      position: fixed;
+      inset: 0;
+      z-index: 1004;
+      background: rgba(0, 0, 0, 0.45);
+    }
+    body.nav-open #nav-scrim { display: block; }
+
+    /* Hamburger becomes an X while the panel is open. */
+    body.nav-open #nav-toggle span:nth-child(1) { transform: translateY(6px) rotate(45deg); }
+    body.nav-open #nav-toggle span:nth-child(2) { opacity: 0; }
+    body.nav-open #nav-toggle span:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }
+
+    /* Sits to the right of the toggle instead of centred, and scrolls
+       sideways rather than colliding with it on narrow screens. */
+    .region-jump {
+      left: 62px;
+      right: 10px;
+      transform: none;
+      justify-content: space-between;
+      overflow-x: auto;
+    }
+    .region-jump button {
+      font-size: 12px;
+      padding: 5px 7px;
+      white-space: nowrap;
+    }
+
+    /* Above the open panel, so editing from a map popup is never buried. */
+    #editor { z-index: 1010; }
+  }
 </style>
 </head>
 <body>
+
+<button id="nav-toggle" aria-label="Show spot list" aria-expanded="false" aria-controls="sidebar">
+  <span></span><span></span><span></span>
+</button>
+<div id="nav-scrim"></div>
 
 <div id="sidebar">
   <header>
@@ -369,7 +458,9 @@
         <option value="">All regions</option>
         <option value="fairmont">Fairmont / Columbia Valley</option>
         <option value="south">Cranbrook / Elk Valley</option>
+        <option value="westkootenay">Kootenay Lake / Crawford Bay</option>
         <option value="calgary">Calgary area</option>
+        <option value="methow">Methow Valley WA</option>
         <option value="other">Other</option>
       </select>
       <select id="sort-by">
@@ -392,7 +483,9 @@
 <div class="region-jump">
   <button id="jump-fairmont">Fairmont BC</button>
   <button id="jump-south">Cranbrook</button>
+  <button id="jump-westkootenay">Crawford Bay</button>
   <button id="jump-calgary">Calgary</button>
+  <button id="jump-methow">Winthrop WA</button>
   <button id="jump-all">Fit all</button>
 </div>
 
@@ -426,7 +519,9 @@
       <select id="f-region">
         <option value="fairmont">Fairmont / Columbia Valley</option>
         <option value="south">Cranbrook / Elk Valley</option>
+        <option value="westkootenay">Kootenay Lake / Crawford Bay</option>
         <option value="calgary">Calgary area</option>
+        <option value="methow">Methow Valley WA</option>
         <option value="other">Other</option>
       </select>
     </div>
@@ -489,14 +584,18 @@ const CRITERIA = [
 const REGION_LABELS = {
   fairmont: 'Fairmont / Columbia Valley',
   south: 'Cranbrook / Elk Valley',
+  westkootenay: 'Kootenay Lake / Crawford Bay',
   calgary: 'Calgary area',
+  methow: 'Methow Valley WA',
   other: 'Other',
 };
 
 const REGION_VIEWS = {
-  fairmont: { center: [50.33, -115.87], zoom: 11 },
-  south:    { center: [49.55, -115.30], zoom: 9 },
-  calgary:  { center: [51.02, -114.05], zoom: 10 },
+  fairmont:     { center: [50.33, -115.87], zoom: 11 },
+  south:        { center: [49.55, -115.30], zoom: 9 },
+  westkootenay: { center: [49.55, -116.75], zoom: 9 },
+  calgary:      { center: [51.02, -114.05], zoom: 10 },
+  methow:       { center: [48.47, -120.19], zoom: 11 },
 };
 
 const SAMPLE_SPOTS = [
@@ -933,6 +1032,186 @@ const SEED_SPOTS = [
     ratings: { fish: 3, action: 3, access: 4, scenery: 3 },
     createdAt: 1784678400000,
   },
+
+  // ── Kootenay Lake / Crawford Bay (West Kootenay, BC Region 4) ──────────────
+  // Region 4 blanket rules that apply to every stream below: single barbless hook
+  // in ALL Region 4 streams all year; no fishing in any stream Apr 1–June 14;
+  // trout/char release in streams Nov 1–Mar 31. Kootenay Lake's tributaries are
+  // bull trout catch-and-release.
+  {
+    id: 'seed-kootenay-lake-eastshore',
+    name: 'Kootenay Lake — Crawford Bay / Pilot Bay shoreline',
+    detail: 'The bay flat, the Pilot Bay point and the creek mouths between Kootenay Bay and Riondel',
+    waterbody: 'Kootenay Lake (Main Body)',
+    region: 'westkootenay',
+    geometry: { type: 'marker', coords: [[49.6752, -116.8240]] },
+    species: ['rainbow trout (Gerrard)', 'bull trout', 'kokanee', 'burbot'],
+    season: 'Prime for the big fish is Oct–Mar (and the spring shoulder). August is the slow season — fish the first and last hour of light off the drop-offs and creek mouths.',
+    access: 'Walk-in off the Crawford Bay beach and the Crawford Creek alluvial fan; boat launches at Kootenay Bay, Riondel and Kuskanook. A float tube or pontoon gets you onto the shelf edge, which is where a fly actually reaches fish. Main Body regs: bull trout 1/day, rainbow 10/day, kokanee 0 quota, burbot catch and release — and you need the Conservation Surcharge Stamp to keep a rainbow over 50 cm (annual quota 20).',
+    notes: 'This is the water you can see from the lodge, and it holds the largest rainbow trout in the world — but it is a deep-water trolling fishery for most of the year. On the fly in August, treat it as a dawn-and-dusk streamer game on a fast sink line rather than the main event; the creeks and the day-trip waters below will fish better. NOTE: Crawford Creek itself is listed as No Fishing in the Region 4 synopsis — check the entry before you wet a line in it. Seeded ratings are reputation-based.',
+    ratings: { fish: 5, action: 2, access: 4, scenery: 5 },
+    createdAt: 1786060800000,
+  },
+  {
+    id: 'seed-gray-creek',
+    name: 'Gray Creek',
+    detail: 'Mouth at Gray Creek village up the Gray Creek Pass FSR corridor — pocket water and plunge pools',
+    waterbody: 'Gray Creek',
+    region: 'westkootenay',
+    geometry: { type: 'line', coords: [[49.6242, -116.8085], [49.6234, -116.7789], [49.6225, -116.7480], [49.6220, -116.7207]] },
+    species: ['rainbow trout', 'cutthroat trout', 'bull trout (release)'],
+    season: 'Open after the Region 4 stream closure ends June 14; low and clear July–Sept, which is exactly when it fishes best',
+    access: '10 min south of Crawford Bay on Hwy 3A. The Gray Creek Pass FSR (turn off just south of the Gray Creek Store) follows the creek up — park at a pull-off and drop in. Single barbless hook, bull trout catch and release as a Kootenay Lake tributary.',
+    notes: 'Your after-dinner creek. Small, steep, cold, and full of eager little rainbows and cutthroat — a 3-wt with a stimulator or a parachute Adams is the whole kit. Nobody drives here for it, which is the point. Line traces the road corridor — redraw the reaches you actually like. Seeded ratings are reputation-based.',
+    ratings: { fish: 2, action: 4, access: 4, scenery: 4 },
+    createdAt: 1786060800000,
+  },
+  {
+    id: 'seed-lockhart-creek',
+    name: 'Lockhart Creek',
+    detail: 'From the mouth at Lockhart Beach Provincial Park up the trail into Lockhart Creek Provincial Park',
+    waterbody: 'Lockhart Creek',
+    region: 'westkootenay',
+    geometry: { type: 'line', coords: [[49.5088, -116.7880], [49.5030, -116.7550], [49.4980, -116.7200]] },
+    species: ['rainbow trout', 'bull trout (release)', 'kokanee'],
+    season: 'June 15–Oct; best once the creek drops in July',
+    access: 'Lockhart Beach Provincial Park on Hwy 3A, ~20 min south of Crawford Bay — small campground and day-use right at the mouth. A hiking trail runs up the creek through old-growth cedar and fir, so you can walk past the road-accessible water. Single barbless, bull trout release.',
+    notes: 'Same idea as Gray Creek but with a proper trail up it, so you can leave the crowds behind in ten minutes of walking. Rainbows are reportedly plentiful if small. Line is approximate — redraw once you have walked it. Seeded ratings are reputation-based.',
+    ratings: { fish: 2, action: 3, access: 3, scenery: 4 },
+    createdAt: 1786060800000,
+  },
+  {
+    id: 'seed-wooden-shoe',
+    name: 'Wooden Shoe Lake',
+    detail: 'Small hike-in stillwater in the hills above Kuskanook, SE of the lake',
+    waterbody: 'Wooden Shoe Lake',
+    region: 'westkootenay',
+    geometry: { type: 'marker', coords: [[49.3349, -116.5739]] },
+    species: ['westslope cutthroat trout (stocked)'],
+    season: 'June–Sept; classic small-stillwater fly fishing — dries and chironomids morning and evening',
+    access: 'Hwy 3A south to the Kuskanook area, then forest road up — a 4x4 is recommended for the last bumpy stretch, then a short 0.7 km hike from the Wooden Shoe Trail rec site to the lake. Bring a float tube if you can carry it.',
+    notes: 'The best dedicated fly-fishing stillwater within about an hour of Crawford Bay. Lightly stocked with westslope cutthroat and, by local accounts, often full of them — the kind of lake where dry flies work all day because nothing has taught the fish otherwise. The effort of the road and the walk is the whole reason it stays good. Seeded ratings are reputation-based.',
+    ratings: { fish: 3, action: 4, access: 2, scenery: 4 },
+    createdAt: 1786060800000,
+  },
+  {
+    id: 'seed-duck-lake-creston',
+    name: 'Duck Lake (Creston)',
+    detail: 'Shallow weedy lake on the Kootenay flats north of Creston — largemouth bass on poppers',
+    waterbody: 'Duck Lake',
+    region: 'westkootenay',
+    geometry: { type: 'marker', coords: [[49.2360, -116.6394]] },
+    species: ['largemouth bass', 'yellow perch'],
+    season: 'Warm-water fishery — July and August are the PEAK, which is unusual for this trip. First two hours of light on the weed edges.',
+    access: 'About 1 hr 15 min south of Crawford Bay via Hwy 3A. PERMIT REQUIRED — Duck Lake sits inside the Creston Valley Wildlife Management Area (crestonwildlife.ca or 250-402-6900). NO POWERED BOATS: canoe, kayak or float tube only. Regs: bass 3/day (only 1 over 40 cm) June 16–May 14; yellow perch 20/day.',
+    notes: 'The contrarian pick, and the one water on this list where August is prime rather than a compromise. A 6–7 wt, a floating line and a deer-hair popper or a Dahlberg diver worked along the weed lines at dawn is about as much fun as a fly rod gets. Bring bug spray and a boat you can carry. Seeded ratings are reputation-based.',
+    ratings: { fish: 3, action: 5, access: 3, scenery: 3 },
+    createdAt: 1786060800000,
+  },
+  {
+    id: 'seed-goat-river',
+    name: 'Goat River',
+    detail: 'Canyon and valley runs between Erickson and the Kootenay confluence at Creston',
+    waterbody: 'Goat River',
+    region: 'westkootenay',
+    geometry: { type: 'line', coords: [[49.0870, -116.4880], [49.0930, -116.4400], [49.1000, -116.3800], [49.1100, -116.3200]] },
+    species: ['cutthroat trout', 'rainbow trout', 'bull trout (release)'],
+    season: 'July–Oct once it drops and clears',
+    access: 'About 1 hr south via Hwy 3A to Creston, then Hwy 3 east — road access and pull-offs along the valley, with a walk-in canyon section. Regs: TROUT/CHAR CATCH AND RELEASE on the mainstem, bait ban June 15–Oct 31, single barbless.',
+    notes: "The best genuine trout river within an hour of Crawford Bay, and the local's summer water for both floating and fly fishing. Catch-and-release mainstem regs keep it honest. Line is drawn along the valley corridor — redraw your beats on satellite once you've scouted it. Seeded ratings are reputation-based.",
+    ratings: { fish: 3, action: 3, access: 3, scenery: 4 },
+    createdAt: 1786060800000,
+  },
+  {
+    id: 'seed-kaslo-river',
+    name: 'Kaslo River',
+    detail: 'From the Kootenay Lake mouth at Kaslo up toward the Keen Creek confluence',
+    waterbody: 'Kaslo River',
+    region: 'westkootenay',
+    geometry: { type: 'line', coords: [[49.9137, -116.9080], [49.9090, -116.8600], [49.9050, -116.8100], [49.9000, -116.7600]] },
+    species: ['rainbow trout', 'bull trout', 'mountain whitefish'],
+    season: 'July–Oct after runoff',
+    access: 'Requires the free Kootenay Bay–Balfour ferry (35 min crossing, longest free ferry ride in the world) then ~50 min north on Hwy 31 — budget 1 hr 45 min door to door. Road access along the river east of town. Regs: BAIT BAN, bull trout 2/day, single barbless.',
+    notes: 'A proper freestone river rather than a creek, and worth pairing with a day in Kaslo if you are taking the ferry anyway. Keen Creek (a tributary) carries the same bull trout allowance. Line is approximate along the road corridor. Seeded ratings are reputation-based.',
+    ratings: { fish: 3, action: 3, access: 3, scenery: 4 },
+    createdAt: 1786060800000,
+  },
+  {
+    id: 'seed-lardeau-river',
+    name: 'Lardeau River',
+    detail: 'Trout Lake outlet at Gerrard down the Hwy 31 corridor to the north end of Kootenay Lake',
+    waterbody: 'Lardeau River',
+    region: 'westkootenay',
+    geometry: { type: 'line', coords: [[50.4800, -117.2600], [50.3600, -117.1300], [50.2400, -117.0300], [50.1200, -116.9800], [50.0100, -116.9600]] },
+    species: ['rainbow trout (Gerrard)', 'bull trout', 'mountain whitefish'],
+    season: 'The spawning run is late Apr–late May and the river fishes best spring and fall — August is the shoulder. Go for the setting as much as the catching.',
+    access: 'The long one: ferry to Balfour, north through Kaslo on Hwy 31 to Lardeau and Meadow Creek — roughly 2.5 hrs each way from Crawford Bay. Regs: NO FISHING from the Trout Lake outlet downstream ~600 m to the signs near Mobbs Creek (that is the Gerrard spawning reach — stay out of it). Elsewhere the river is exempt from the Apr 1–June 14 spring closure; rainbow 5/day, bull trout 2/day, single barbless.',
+    notes: 'The nursery of the Gerrard rainbow — the largest strain of rainbow trout on earth spawns in a 300 m section of this river. A bucket-list river, but be honest about the drive and the season: it is a 5-hour round trip and mid-August is not its prime window. Worth it if you want the pilgrimage; skip it if you only have a couple of fishing mornings. Line follows the Hwy 31 corridor — redraw as you learn it. Seeded ratings are reputation-based.',
+    ratings: { fish: 5, action: 2, access: 2, scenery: 5 },
+    createdAt: 1786060800000,
+  },
+
+  // ── Methow Valley, Washington (Winthrop) ──────────────────────────────────
+  // Everything here is SELECTIVE GEAR RULES: unscented artificial fly or lure,
+  // single barbless hook, no bait. Rivers are RELEASE ALL FISH. Steelhead season
+  // is closed and bull trout must be released. A WA non-resident freshwater
+  // licence is required — buy online at wdfw.wa.gov or in Winthrop.
+  {
+    id: 'seed-methow-winthrop',
+    name: 'Methow River — Winthrop town water',
+    detail: 'Gold Creek up to Foghorn Dam — the reach through Winthrop and down toward Twisp',
+    waterbody: 'Methow River',
+    region: 'methow',
+    geometry: { type: 'line', coords: [[48.5030, -120.2200], [48.4880, -120.2000], [48.4735, -120.1773], [48.4400, -120.1500], [48.4000, -120.1300], [48.3635, -120.1223]] },
+    species: ['westslope cutthroat trout', 'rainbow trout', 'bull trout (release)', 'mountain whitefish'],
+    season: 'Open the Saturday before Memorial Day through SEPT 30. July–Sept is prime; flows settle around 2,500 cfs and the water goes gin clear. Fish the first three hours of light before the heat.',
+    access: 'Walk-and-wade straight out of town — the Methow/Chewuch confluence at Winthrop, the Spring Creek bridge, and the pull-offs along Hwy 20 heading downstream toward Twisp. SELECTIVE GEAR RULES (unscented artificial fly/lure, single barbless hook, no bait) and RELEASE ALL FISH. Steelhead closed. Non-resident WA freshwater licence required.',
+    notes: 'This is your morning. Of the four Methow reaches, this is the one that stays open through September, so it works whatever day you land — the reach immediately upstream (Foghorn Dam to Weeman Bridge) and the Chewuch both slam shut on Aug 15. August is terrestrial season: hoppers, ants and beetles tight to the undercut banks, with a small beadhead dropper. 4- or 5-wt, 9 ft of 4X. Cutthroat to 18" are realistic and the river holds bull trout well over 20 lb. Do NOT drive up past Weeman Bridge toward Mazama — that stretch is closed to trout and naturally goes dry in late summer. Line follows the river corridor; redraw your beats. Seeded ratings are reputation-based.',
+    ratings: { fish: 4, action: 4, access: 5, scenery: 5 },
+    createdAt: 1786060800000,
+  },
+  {
+    id: 'seed-chewuch',
+    name: 'Chewuch River',
+    detail: 'Confluence in Winthrop up to Eight Mile Creek — smaller, wadeable pocket water',
+    waterbody: 'Chewuch River',
+    region: 'methow',
+    geometry: { type: 'line', coords: [[48.4790, -120.1830], [48.5100, -120.1650], [48.5500, -120.1450], [48.5900, -120.1400], [48.6280, -120.1420]] },
+    species: ['westslope cutthroat trout', 'rainbow trout', 'bull trout (release)'],
+    season: 'CLOSES AUG 15 — open only the Saturday before Memorial Day through August 15. Before that date it is the most fun wade in the valley.',
+    access: 'The Chewuch joins the Methow right in Winthrop; the West Chewuch and East Chewuch roads follow it north with constant access. Selective gear rules, RELEASE ALL FISH, single barbless, no bait.',
+    notes: 'Smaller and more intimate than the Methow — a 4-wt, a dry fly and a pair of wet-wading shoes. Fish the seams and plunge pools rather than the flats. CHECK YOUR DATE FIRST: if your morning falls on or before Aug 15 this is arguably the better choice than the main river; after that it is closed and you fish the Methow at Winthrop instead. The Twisp River (mouth to War Creek) closes on the same date. Line is approximate up to the Eight Mile Creek boundary — confirm the exact upstream limit. Seeded ratings are reputation-based.',
+    ratings: { fish: 3, action: 4, access: 5, scenery: 4 },
+    createdAt: 1786060800000,
+  },
+  {
+    id: 'seed-big-twin',
+    name: 'Big Twin Lake',
+    detail: 'Selective-gear stillwater 5 minutes south of Winthrop off Twin Lakes Rd',
+    waterbody: 'Big Twin Lake',
+    region: 'methow',
+    geometry: { type: 'marker', coords: [[48.4465, -120.1951]] },
+    species: ['rainbow trout'],
+    season: 'Open the fourth Saturday in April through Oct 31. Best May–June and Sept–Oct; in August fish it at first light before it warms.',
+    access: 'Five minutes from town — the easiest possible option if you want to be on the water at 5:30 and back for breakfast. SELECTIVE GEAR RULES; trout limit 1 with an 18" minimum; no internal-combustion motors, so bring a float tube, pontoon or a kick boat. WDFW access site on the lake.',
+    notes: 'The valley\'s dedicated fly-fishing lake, and the fallback if the river is running warm (a real risk in August — if the Methow is pushing 68°F+, leave the trout alone and come here early instead). Rainbows run 10–18". Sinking line with a wooly bugger, dragonfly or damsel nymph out over the deeper water; chironomids under an indicator on the shoals at dawn. Seeded ratings are reputation-based.',
+    ratings: { fish: 3, action: 3, access: 5, scenery: 3 },
+    createdAt: 1786060800000,
+  },
+  {
+    id: 'seed-davis-lake-wa',
+    name: 'Davis Lake (Methow)',
+    detail: 'Long narrow 40-acre lake SE of Winthrop — walk-in, no motors',
+    waterbody: 'Davis Lake',
+    region: 'methow',
+    geometry: { type: 'marker', coords: [[48.4379, -120.1204]] },
+    species: ['rainbow trout'],
+    season: 'Fishes well through the summer; mornings and evenings',
+    access: 'Short walk in from the trailhead off the Bear Creek / Davis Lake road, about 15 min from Winthrop. SELECTIVE GEAR RULES; trout limit 2 with a 14" minimum; no internal-combustion motors. Float tube is the way.',
+    notes: 'The other selective-gear stillwater near Winthrop, and by reputation the more aggressive of the two — lots of fish in the 10–15" class that eat readily. Smaller average size than Big Twin but a lot more action, which makes it the better pick if you only have one morning and want to bend the rod. Seeded ratings are reputation-based.',
+    ratings: { fish: 3, action: 4, access: 4, scenery: 4 },
+    createdAt: 1786060800000,
+  },
 ];
 
 const SEEDS_SEEN_KEY = 'fishing-seeds-seen-v1';
@@ -1175,7 +1454,11 @@ function renderList() {
       (spot.classified ? `<span class="chip classified">classified water</span>` : '') +
       (spot.species || []).map(sp => `<span class="chip">${escapeHtml(sp)}</span>`).join('') +
       `</div>`;
-    card.addEventListener('click', () => { setActiveCard(spot.id); flyToSpot(spot); });
+    card.addEventListener('click', () => {
+      setActiveCard(spot.id);
+      flyToSpot(spot);
+      closeNavOnMobile();
+    });
     listEl.appendChild(card);
   }
 }
@@ -1210,6 +1493,8 @@ function startDraw(type, forSpotId = null) {
   document.getElementById('draw-finish').style.display = type === 'marker' ? 'none' : '';
   map.getContainer().style.cursor = 'crosshair';
   closeEditorPanel(false);
+  // The next tap belongs to the map, so get the panel out of the way.
+  closeNavOnMobile();
 }
 
 function updateTempLayer() {
@@ -1266,7 +1551,36 @@ document.getElementById('btn-add-line').addEventListener('click', () => startDra
 document.getElementById('btn-add-area').addEventListener('click', () => startDraw('area'));
 document.getElementById('draw-finish').addEventListener('click', finishDraw);
 document.getElementById('draw-cancel').addEventListener('click', cancelDraw);
-document.addEventListener('keydown', (e) => { if (e.key === 'Escape') cancelDraw(); });
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Escape') return;
+  cancelDraw();
+  closeNav();
+});
+
+/* ---------- Nav toggle ----------
+   The sidebar is always visible on desktop; below the breakpoint it becomes an
+   overlay driven by body.nav-open. */
+const navToggle = document.getElementById('nav-toggle');
+const navScrim = document.getElementById('nav-scrim');
+const mobileQuery = window.matchMedia('(max-width: 760px)');
+
+function setNav(open) {
+  document.body.classList.toggle('nav-open', open);
+  navToggle.setAttribute('aria-expanded', String(open));
+  navToggle.setAttribute('aria-label', open ? 'Hide spot list' : 'Show spot list');
+}
+function closeNav() { setNav(false); }
+
+/* Called by actions that hand the map back to the user. A no-op on desktop,
+   where closing the sidebar would take away the list for no reason. */
+function closeNavOnMobile() { if (mobileQuery.matches) closeNav(); }
+
+navToggle.addEventListener('click', () =>
+  setNav(!document.body.classList.contains('nav-open')));
+navScrim.addEventListener('click', closeNav);
+// Rotating to landscape past the breakpoint would otherwise strand body.nav-open
+// set — invisible on desktop, but it desyncs the button's aria state.
+mobileQuery.addEventListener('change', (e) => { if (!e.matches) closeNav(); });
 
 /* ================= Editor ================= */
 
@@ -1320,6 +1634,7 @@ function geomSummary(g) {
 
 function openEditor(spotId, newGeometry = null) {
   map.closePopup();
+  closeNavOnMobile();
   const spot = spotId ? spots.find(s => s.id === spotId) : null;
   editing = {
     id: spotId,
@@ -1423,8 +1738,12 @@ document.getElementById('jump-fairmont').addEventListener('click', () =>
   map.flyTo(REGION_VIEWS.fairmont.center, REGION_VIEWS.fairmont.zoom, { duration: 0.8 }));
 document.getElementById('jump-south').addEventListener('click', () =>
   map.flyTo(REGION_VIEWS.south.center, REGION_VIEWS.south.zoom, { duration: 0.8 }));
+document.getElementById('jump-westkootenay').addEventListener('click', () =>
+  map.flyTo(REGION_VIEWS.westkootenay.center, REGION_VIEWS.westkootenay.zoom, { duration: 0.8 }));
 document.getElementById('jump-calgary').addEventListener('click', () =>
   map.flyTo(REGION_VIEWS.calgary.center, REGION_VIEWS.calgary.zoom, { duration: 0.8 }));
+document.getElementById('jump-methow').addEventListener('click', () =>
+  map.flyTo(REGION_VIEWS.methow.center, REGION_VIEWS.methow.zoom, { duration: 0.8 }));
 document.getElementById('jump-all').addEventListener('click', () => {
   const layers = [...layersBySpot.values()];
   if (!layers.length) return;
