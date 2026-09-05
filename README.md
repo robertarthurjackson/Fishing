@@ -3,7 +3,7 @@
 An interactive map for cataloguing fishing spots — rate them, sketch the actual
 stretch of river you fish, and keep the access notes and regulations with the pin.
 
-**▶ Try it: https://robertarthurjackson.github.io/Fishing/**
+**▶ Try it: https://robroth.ca/Fishing/**
 
 It opens in any browser, phone or desktop. There is nothing to install and no
 account to make.
